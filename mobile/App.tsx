@@ -50,6 +50,77 @@ const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (Platform.OS === 'android' ? 'http://10.0.2.2:4100/api' : 'http://localhost:4100/api');
 
+// When there is no configured backend AND we're not in local dev (Expo Go), run
+// a self-contained demo so the hosted web export shows real branded data.
+const USE_DEMO = !process.env.EXPO_PUBLIC_API_URL && !__DEV__;
+
+const DEMO_TENANTS: Tenant[] = [
+  {
+    id: 'shell',
+    slug: 'shell',
+    displayName: 'SafeShift Shell',
+    theme: { logoText: 'Shell', primary: '#DD1D21', secondary: '#FBCE07', accent: '#FBCE07' },
+  },
+  {
+    id: 'exxon',
+    slug: 'exxon',
+    displayName: 'SafeShift ExxonMobil',
+    theme: { logoText: 'ExxonMobil', primary: '#CE1126', secondary: '#0054A4', accent: '#0054A4' },
+  },
+  {
+    id: 'chevron',
+    slug: 'chevron',
+    displayName: 'SafeShift Chevron',
+    theme: { logoText: 'Chevron', primary: '#0066B2', secondary: '#ED1C24', accent: '#ED1C24' },
+  },
+];
+
+const DEMO_NAMES: Record<string, { first: string; last: string; role: string }> = {
+  hse: { first: 'Dana', last: 'Reyes', role: 'hse_manager' },
+  supervisor: { first: 'Marcus', last: 'Hale', role: 'supervisor' },
+  worker: { first: 'Sam', last: 'Carter', role: 'worker' },
+  contractor: { first: 'Jordan', last: 'Pike', role: 'contractor' },
+};
+
+function demoDashboard(): Dashboard {
+  return {
+    scope: 'tenant',
+    stats: {
+      workforce: 4,
+      upcomingTrainings: 2,
+      certifications: 6,
+      auditReadiness: 33,
+      certStatus: { active: 2, expiring: 2, expired: 2 },
+    },
+  };
+}
+
+function demoResolve<T>(path: string, options?: { body?: unknown; tenantSlug?: string | null }): T {
+  if (path === '/tenants') return { tenants: DEMO_TENANTS } as T;
+  if (path === '/dashboard') return demoDashboard() as T;
+  if (path === '/auth/login') {
+    const body = (options?.body ?? {}) as { email?: string };
+    const email = String(body.email ?? '').trim().toLowerCase();
+    if (email === 'admin@safeshift.app') {
+      return {
+        token: 'demo.admin',
+        user: { id: 'platform-admin', role: 'platform_admin', fullName: 'Platform Admin', email },
+        tenant: null,
+      } as T;
+    }
+    const match = /^(hse|supervisor|worker|contractor)@(shell|exxon|chevron)\.safeshift\.app$/.exec(email);
+    if (!match) throw new Error('Invalid email or password');
+    const who = DEMO_NAMES[match[1]];
+    const tenant = DEMO_TENANTS.find((t) => t.slug === match[2]) ?? null;
+    return {
+      token: `demo.${match[2]}.${match[1]}`,
+      user: { id: `${match[2]}-${match[1]}`, role: who.role, fullName: `${who.first} ${who.last}`, email },
+      tenant,
+    } as T;
+  }
+  throw new Error(`Demo: unhandled ${path}`);
+}
+
 const BRAND_DEMO_EMAIL: Record<string, string> = {
   shell: 'hse@shell.safeshift.app',
   exxon: 'hse@exxon.safeshift.app',
@@ -69,6 +140,10 @@ async function apiFetch<T>(
     body?: unknown;
   },
 ): Promise<T> {
+  if (USE_DEMO) {
+    return demoResolve<T>(path, { body: options?.body, tenantSlug: options?.tenantSlug });
+  }
+
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (options?.token) headers.Authorization = `Bearer ${options.token}`;
   if (options?.tenantSlug) headers['X-Tenant'] = options.tenantSlug;

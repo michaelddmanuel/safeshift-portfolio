@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { tenantApi } from '../api/endpoints';
+import { IS_DEMO } from '../api/client';
 import { applyBrandTheme } from '../lib/theme';
 import { AuthBackground } from '../components/AuthBackground';
 import { BrandLogo, HexMark, ShieldMark } from '../components/Logo';
@@ -262,6 +263,11 @@ export function LoginPage() {
           <p className="mt-6 text-center text-xs text-slate-400">
             © {new Date().getFullYear()} SafeShift · Multi-tenant HSE platform
           </p>
+          {IS_DEMO && (
+            <p className="mt-2 text-center text-[11px] font-medium text-slate-400">
+              Demo mode · seeded data, no live backend
+            </p>
+          )}
         </div>
       </div>
       </section>

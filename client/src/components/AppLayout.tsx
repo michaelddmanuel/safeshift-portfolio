@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
 import { BrandLockup } from './BrandLockup';
 import { BrandToggle } from './BrandToggle';
+import { IS_DEMO } from '../api/client';
 import {
   HomeIcon,
   CalendarIcon,
@@ -149,6 +150,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <p className="hidden text-sm font-semibold text-slate-700 lg:block">{workspaceName}</p>
           <div className="flex items-center gap-4">
+            {IS_DEMO && (
+              <span className="hidden rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 sm:inline">
+                Demo data
+              </span>
+            )}
             <BrandToggle />
             <button
               onClick={logout}
