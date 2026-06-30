@@ -1,7 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { certApi, dashboardApi, toolboxApi, trainingApi, userApi } from '../api/endpoints';
+import {
+  certApi,
+  dashboardApi,
+  incidentApi,
+  toolboxApi,
+  trainingApi,
+  userApi,
+  type IncidentUpdate,
+} from '../api/endpoints';
 import { useTenant } from '../context/TenantContext';
 import { useToast } from '../components/Toast';
+import type { NewIncident } from '../types';
 
 /** Active tenant slug — part of every query key so switching brand refetches. */
 function useScope(): string {
@@ -37,6 +46,46 @@ export function useToolboxTalks() {
 export function useUsers() {
   const scope = useScope();
   return useQuery({ queryKey: ['users', scope], queryFn: userApi.list });
+}
+
+export function useIncidents() {
+  const scope = useScope();
+  return useQuery({ queryKey: ['incidents', scope], queryFn: incidentApi.list });
+}
+
+export function useIncidentSummary() {
+  const scope = useScope();
+  return useQuery({ queryKey: ['incidentSummary', scope], queryFn: incidentApi.summary });
+}
+
+export function useCreateIncident() {
+  const scope = useScope();
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: (body: NewIncident) => incidentApi.create(body),
+    onSuccess: () => {
+      toast.success('Incident reported');
+      void qc.invalidateQueries({ queryKey: ['incidents', scope] });
+      void qc.invalidateQueries({ queryKey: ['incidentSummary', scope] });
+    },
+    onError: () => toast.error('Could not report incident. Please try again.'),
+  });
+}
+
+export function useUpdateIncident() {
+  const scope = useScope();
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: IncidentUpdate }) => incidentApi.update(id, body),
+    onSuccess: () => {
+      toast.success('Investigation updated');
+      void qc.invalidateQueries({ queryKey: ['incidents', scope] });
+      void qc.invalidateQueries({ queryKey: ['incidentSummary', scope] });
+    },
+    onError: () => toast.error('Could not update incident.'),
+  });
 }
 
 export function useAttendTraining() {

@@ -1,4 +1,4 @@
-import { sequelize, Tenant, User, Site, CourseCatalog, Training, Certification, ToolboxTalk } from '../models';
+import { sequelize, Tenant, User, Site, CourseCatalog, Training, Certification, ToolboxTalk, Incident } from '../models';
 import { computeCertStatus } from '../models/Certification';
 import { ROLES } from '../constants';
 import type { FeatureMap, SiteType } from '../constants';
@@ -288,6 +288,82 @@ async function seed(): Promise<void> {
         scheduledAt: addDays(now, 2),
         location: sites[0]!.name,
         facilitator: 'Dana Reyes',
+      },
+    ]);
+
+    // Incidents (§8) — OSHA 1904 recordable + near-miss, for the 300 Log.
+    await Incident.bulkCreate([
+      {
+        tenantId: tenant.id,
+        caseNumber: `${now.getFullYear()}-001`,
+        siteId: sites[0]!.id,
+        reportedById: hse.id,
+        affectedUserId: worker.id,
+        type: 'injury',
+        severity: 'high',
+        title: 'Hand laceration during valve maintenance',
+        description: 'Worker sustained a laceration to the left hand while replacing a gasket.',
+        occurredAt: addDays(now, -12),
+        location: `${sites[0]!.name} — Unit 2`,
+        status: 'investigating',
+        oshaRecordable: true,
+        oshaClassification: 'days-away',
+        daysAway: 5,
+        injuryCategory: 'injury',
+        bodyPart: 'Left hand',
+        rootCause: 'Inadequate cut-resistant gloves for the task; gasket scraper slipped.',
+        correctiveAction: 'Issued ANSI A4 cut-resistant gloves; updated JSA for gasket replacement.',
+      },
+      {
+        tenantId: tenant.id,
+        caseNumber: `${now.getFullYear()}-002`,
+        siteId: sites[0]!.id,
+        reportedById: supervisorUser ? supervisorUser.id : hse.id,
+        affectedUserId: null,
+        type: 'near-miss',
+        severity: 'medium',
+        title: 'Dropped object near walkway',
+        description: 'A wrench fell from elevated scaffolding; no one was struck.',
+        occurredAt: addDays(now, -6),
+        location: `${sites[0]!.name} — Tank Farm`,
+        status: 'closed',
+        oshaRecordable: false,
+        rootCause: 'Tools not tethered at height.',
+        correctiveAction: 'Mandatory tool tethering above 6 ft; toolbox talk delivered.',
+      },
+      {
+        tenantId: tenant.id,
+        caseNumber: `${now.getFullYear()}-003`,
+        siteId: sites[0]!.id,
+        reportedById: hse.id,
+        affectedUserId: worker.id,
+        type: 'first-aid',
+        severity: 'low',
+        title: 'Minor eye irritation',
+        description: 'Dust exposure; flushed at eyewash station, no further treatment required.',
+        occurredAt: addDays(now, -3),
+        location: `${sites[0]!.name} — Lab`,
+        status: 'closed',
+        oshaRecordable: false,
+      },
+      {
+        tenantId: tenant.id,
+        caseNumber: `${now.getFullYear()}-004`,
+        siteId: sites[0]!.id,
+        reportedById: supervisorUser ? supervisorUser.id : hse.id,
+        affectedUserId: supervisorUser ? supervisorUser.id : worker.id,
+        type: 'injury',
+        severity: 'medium',
+        title: 'Slip on wet surface',
+        description: 'Employee slipped on a wet floor and strained their back.',
+        occurredAt: addDays(now, -2),
+        location: `${sites[0]!.name} — Control Room`,
+        status: 'open',
+        oshaRecordable: true,
+        oshaClassification: 'restricted',
+        daysRestricted: 3,
+        injuryCategory: 'injury',
+        bodyPart: 'Back',
       },
     ]);
 

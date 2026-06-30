@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TrainingsPage } from './pages/TrainingsPage';
 import { ToolboxTalksPage } from './pages/ToolboxTalksPage';
 import { CertificationsPage } from './pages/CertificationsPage';
+import { IncidentsPage } from './pages/IncidentsPage';
 import { TrainingManagementPage } from './pages/TrainingManagementPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { ReportsAnalyticsPage } from './pages/ReportsAnalyticsPage';
@@ -76,6 +77,14 @@ export function App() {
         element={
           <Protected>
             <CertificationsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/incidents"
+        element={
+          <Protected>
+            <IncidentsPage />
           </Protected>
         }
       />

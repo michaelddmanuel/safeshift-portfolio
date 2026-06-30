@@ -3,7 +3,11 @@ import type {
   Certification,
   CertSummary,
   Dashboard,
+  Incident,
+  IncidentStatus,
+  IncidentSummary,
   ManagedUser,
+  NewIncident,
   NewTraining,
   Tenant,
   Training,
@@ -57,4 +61,27 @@ export const toolboxApi = {
     api.get<{ talk: ToolboxTalkDetail }>(`/toolbox-talks/${id}`).then((r) => r.data.talk),
   signin: (id: string, method = 'manual') =>
     api.post(`/toolbox-talks/${id}/signin`, { method }).then((r) => r.data),
+};
+
+export interface IncidentUpdate {
+  status?: IncidentStatus;
+  severity?: Incident['severity'];
+  rootCause?: string;
+  correctiveAction?: string;
+  oshaRecordable?: boolean;
+  oshaClassification?: Incident['oshaClassification'];
+  daysAway?: number;
+  daysRestricted?: number;
+  injuryCategory?: Incident['injuryCategory'];
+  bodyPart?: string;
+}
+
+export const incidentApi = {
+  list: () => api.get<{ incidents: Incident[] }>('/incidents').then((r) => r.data.incidents),
+  summary: () =>
+    api.get<{ summary: IncidentSummary }>('/incidents/summary').then((r) => r.data.summary),
+  create: (body: NewIncident) =>
+    api.post<{ incident: Incident }>('/incidents', body).then((r) => r.data.incident),
+  update: (id: string, body: IncidentUpdate) =>
+    api.patch<{ incident: Incident }>(`/incidents/${id}`, body).then((r) => r.data.incident),
 };

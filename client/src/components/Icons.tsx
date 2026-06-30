@@ -88,3 +88,13 @@ export function BarChartIcon(p: IconProps) {
     </svg>
   );
 }
+
+export function AlertTriangleIcon(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M12 3.5 22 20H2L12 3.5Z" />
+      <path d="M12 10v4" />
+      <path d="M12 17.5h.01" />
+    </svg>
+  );
+}

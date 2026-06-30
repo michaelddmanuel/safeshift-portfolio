@@ -173,3 +173,76 @@ export interface NewTraining {
   mandatory?: boolean;
   facilitator?: string;
 }
+
+export type IncidentType =
+  | 'injury'
+  | 'illness'
+  | 'near-miss'
+  | 'property-damage'
+  | 'environmental'
+  | 'first-aid';
+export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type IncidentStatus = 'open' | 'investigating' | 'action-pending' | 'closed';
+export type OshaClassification = 'death' | 'days-away' | 'restricted' | 'other-recordable';
+export type InjuryCategory =
+  | 'injury'
+  | 'skin-disorder'
+  | 'respiratory'
+  | 'poisoning'
+  | 'hearing-loss'
+  | 'other-illness';
+
+export interface IncidentPerson {
+  id: string;
+  fullName: string;
+  role: Role;
+}
+
+export interface Incident {
+  id: string;
+  caseNumber: string;
+  type: IncidentType;
+  severity: IncidentSeverity;
+  title: string;
+  description: string | null;
+  occurredAt: string;
+  location: string | null;
+  status: IncidentStatus;
+  oshaRecordable: boolean;
+  oshaClassification: OshaClassification | null;
+  daysAway: number;
+  daysRestricted: number;
+  injuryCategory: InjuryCategory | null;
+  bodyPart: string | null;
+  rootCause: string | null;
+  correctiveAction: string | null;
+  site: Site | null;
+  affected: IncidentPerson | null;
+  reporter: IncidentPerson | null;
+}
+
+export interface IncidentSummary {
+  total: number;
+  recordable: number;
+  open: number;
+  nearMiss: number;
+  daysAway: number;
+  daysRestricted: number;
+}
+
+export interface NewIncident {
+  type: IncidentType;
+  severity?: IncidentSeverity;
+  title: string;
+  description?: string;
+  occurredAt: string;
+  location?: string;
+  siteId?: string;
+  affectedUserId?: string;
+  oshaRecordable?: boolean;
+  oshaClassification?: OshaClassification;
+  daysAway?: number;
+  daysRestricted?: number;
+  injuryCategory?: InjuryCategory;
+  bodyPart?: string;
+}

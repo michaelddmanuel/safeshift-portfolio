@@ -13,6 +13,7 @@ import {
   FileEditIcon,
   UsersIcon,
   BarChartIcon,
+  AlertTriangleIcon,
 } from './Icons';
 import { cn } from '../lib/utils';
 import type { FeatureFlag } from '../types';
@@ -31,6 +32,7 @@ const NAV: NavItem[] = [
   { to: '/trainings', label: 'Training', icon: CalendarIcon },
   { to: '/toolbox-talks', label: 'Toolbox Talks', icon: ClipboardIcon, feature: 'toolboxTalks' },
   { to: '/certifications', label: 'Certifications', icon: ShieldIcon, feature: 'certTracker' },
+  { to: '/incidents', label: 'Incidents', icon: AlertTriangleIcon, feature: 'incidentReporting' },
 ];
 
 const ADMIN_NAV: NavItem[] = [

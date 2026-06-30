@@ -9,6 +9,7 @@ import { Declaration } from './Declaration';
 import { Certification } from './Certification';
 import { ToolboxTalk } from './ToolboxTalk';
 import { ToolboxSignin } from './ToolboxSignin';
+import { Incident } from './Incident';
 
 // ── Tenant ownership (every domain row belongs to one tenant) ──────────────
 Tenant.hasMany(User, { foreignKey: 'tenantId' });
@@ -52,6 +53,16 @@ ToolboxSignin.belongsTo(ToolboxTalk, { foreignKey: 'toolboxTalkId', as: 'toolbox
 User.hasMany(ToolboxSignin, { foreignKey: 'userId', as: 'toolboxSignins' });
 ToolboxSignin.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// ── Incidents (§8) — OSHA 1904 recordable injuries/illnesses + near-misses ──
+Tenant.hasMany(Incident, { foreignKey: 'tenantId' });
+Incident.belongsTo(Tenant, { foreignKey: 'tenantId' });
+
+Site.hasMany(Incident, { foreignKey: 'siteId' });
+Incident.belongsTo(Site, { foreignKey: 'siteId', as: 'site' });
+
+Incident.belongsTo(User, { foreignKey: 'reportedById', as: 'reporter' });
+Incident.belongsTo(User, { foreignKey: 'affectedUserId', as: 'affected' });
+
 export {
   sequelize,
   Tenant,
@@ -64,4 +75,5 @@ export {
   Certification,
   ToolboxTalk,
   ToolboxSignin,
+  Incident,
 };

@@ -4,6 +4,7 @@ import tenantRoutes from './tenants';
 import trainingRoutes from './trainings';
 import toolboxTalkRoutes from './toolbox-talks';
 import certificationRoutes from './certifications';
+import incidentRoutes from './incidents';
 import dashboardRoutes from './dashboard';
 import userRoutes from './users';
 
@@ -16,6 +17,7 @@ router.use('/tenants', tenantRoutes);
 router.use('/trainings', trainingRoutes);
 router.use('/toolbox-talks', toolboxTalkRoutes);
 router.use('/certifications', certificationRoutes);
+router.use('/incidents', incidentRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/users', userRoutes);
 

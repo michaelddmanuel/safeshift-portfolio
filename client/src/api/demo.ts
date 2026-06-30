@@ -13,6 +13,7 @@ import type {
   CertStatus,
   CertSummary,
   Dashboard,
+  Incident,
   ManagedUser,
   Role,
   Tenant,
@@ -170,6 +171,7 @@ interface TenantData {
   trainings: Training[];
   certifications: Certification[];
   toolboxTalks: ToolboxTalk[];
+  incidents: Incident[];
 }
 
 const dataCache = new Map<string, TenantData>();
@@ -290,7 +292,98 @@ function buildTenantData(seed: TenantSeed): TenantData {
     },
   ];
 
-  return { users, trainings, certifications, toolboxTalks };
+  const incidents: Incident[] = [
+    {
+      id: `${slug}-inc-1`,
+      caseNumber: `${NOW.getFullYear()}-001`,
+      type: 'injury',
+      severity: 'high',
+      title: 'Hand laceration during valve maintenance',
+      description: 'Worker sustained a laceration to the left hand while replacing a gasket.',
+      occurredAt: addDays(-12).toISOString(),
+      location: `${seed.siteName} — Unit 2`,
+      status: 'investigating',
+      oshaRecordable: true,
+      oshaClassification: 'days-away',
+      daysAway: 5,
+      daysRestricted: 0,
+      injuryCategory: 'injury',
+      bodyPart: 'Left hand',
+      rootCause: 'Inadequate cut-resistant gloves for the task; gasket scraper slipped.',
+      correctiveAction: 'Issued ANSI A4 cut-resistant gloves; updated JSA for gasket replacement.',
+      site,
+      affected: { id: worker.id, fullName: worker.fullName, role: worker.role },
+      reporter: { id: hse.id, fullName: hse.fullName, role: hse.role },
+    },
+    {
+      id: `${slug}-inc-2`,
+      caseNumber: `${NOW.getFullYear()}-002`,
+      type: 'near-miss',
+      severity: 'medium',
+      title: 'Dropped object near walkway',
+      description: 'A wrench fell from elevated scaffolding; no one was struck.',
+      occurredAt: addDays(-6).toISOString(),
+      location: `${seed.siteName} — Tank Farm`,
+      status: 'closed',
+      oshaRecordable: false,
+      oshaClassification: null,
+      daysAway: 0,
+      daysRestricted: 0,
+      injuryCategory: null,
+      bodyPart: null,
+      rootCause: 'Tools not tethered at height.',
+      correctiveAction: 'Mandatory tool tethering above 6 ft; toolbox talk delivered.',
+      site,
+      affected: null,
+      reporter: { id: supervisor.id, fullName: supervisor.fullName, role: supervisor.role },
+    },
+    {
+      id: `${slug}-inc-3`,
+      caseNumber: `${NOW.getFullYear()}-003`,
+      type: 'first-aid',
+      severity: 'low',
+      title: 'Minor eye irritation',
+      description: 'Dust exposure; flushed at eyewash station, no further treatment required.',
+      occurredAt: addDays(-3).toISOString(),
+      location: `${seed.siteName} — Lab`,
+      status: 'closed',
+      oshaRecordable: false,
+      oshaClassification: null,
+      daysAway: 0,
+      daysRestricted: 0,
+      injuryCategory: null,
+      bodyPart: null,
+      rootCause: null,
+      correctiveAction: null,
+      site,
+      affected: { id: worker.id, fullName: worker.fullName, role: worker.role },
+      reporter: { id: hse.id, fullName: hse.fullName, role: hse.role },
+    },
+    {
+      id: `${slug}-inc-4`,
+      caseNumber: `${NOW.getFullYear()}-004`,
+      type: 'injury',
+      severity: 'medium',
+      title: 'Slip on wet surface',
+      description: 'Employee slipped on a wet floor and strained their back.',
+      occurredAt: addDays(-2).toISOString(),
+      location: `${seed.siteName} — Control Room`,
+      status: 'open',
+      oshaRecordable: true,
+      oshaClassification: 'restricted',
+      daysAway: 0,
+      daysRestricted: 3,
+      injuryCategory: 'injury',
+      bodyPart: 'Back',
+      rootCause: null,
+      correctiveAction: null,
+      site,
+      affected: { id: supervisor.id, fullName: supervisor.fullName, role: supervisor.role },
+      reporter: { id: supervisor.id, fullName: supervisor.fullName, role: supervisor.role },
+    },
+  ];
+
+  return { users, trainings, certifications, toolboxTalks, incidents };
 }
 
 function tenantData(slug: string): TenantData {
@@ -551,6 +644,71 @@ export function resolveDemoRequest(config: InternalAxiosRequestConfig): Promise<
     return Promise.resolve(
       ok(config, { result: { scanned: certs.length, updated: 0, alertsSent: certs.filter((c) => c.status !== 'active').length } }),
     );
+  }
+
+  // Incidents
+  if (path === '/incidents' && method === 'get') {
+    return Promise.resolve(ok(config, { incidents: tenantData(activeSlugForRequest()).incidents }));
+  }
+  if (path === '/incidents/summary' && method === 'get') {
+    const list = tenantData(activeSlugForRequest()).incidents;
+    const summary = { total: list.length, recordable: 0, open: 0, nearMiss: 0, daysAway: 0, daysRestricted: 0 };
+    for (const i of list) {
+      if (i.oshaRecordable) summary.recordable += 1;
+      if (i.status !== 'closed') summary.open += 1;
+      if (i.type === 'near-miss') summary.nearMiss += 1;
+      summary.daysAway += i.daysAway;
+      summary.daysRestricted += i.daysRestricted;
+    }
+    return Promise.resolve(ok(config, { summary }));
+  }
+  if (path === '/incidents' && method === 'post') {
+    const body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data ?? {};
+    const slug = activeSlugForRequest();
+    const data = tenantData(slug);
+    const incident: Incident = {
+      id: `${slug}-inc-${Date.now()}`,
+      caseNumber: `${NOW.getFullYear()}-${String(data.incidents.length + 1).padStart(3, '0')}`,
+      type: body.type ?? 'near-miss',
+      severity: body.severity ?? 'low',
+      title: String(body.title ?? 'Incident'),
+      description: body.description ?? null,
+      occurredAt: body.occurredAt ?? NOW.toISOString(),
+      location: body.location ?? null,
+      status: 'open',
+      oshaRecordable: Boolean(body.oshaRecordable),
+      oshaClassification: body.oshaClassification ?? null,
+      daysAway: body.daysAway ?? 0,
+      daysRestricted: body.daysRestricted ?? 0,
+      injuryCategory: body.injuryCategory ?? null,
+      bodyPart: body.bodyPart ?? null,
+      rootCause: null,
+      correctiveAction: null,
+      site: null,
+      affected: null,
+      reporter: null,
+    };
+    data.incidents.unshift(incident);
+    return Promise.resolve(ok(config, { incident }));
+  }
+  if (/^\/incidents\/[^/]+$/.test(path) && method === 'patch') {
+    const id = path.split('/').pop();
+    const body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data ?? {};
+    const incident = tenantData(activeSlugForRequest()).incidents.find((i) => i.id === id);
+    if (!incident) return Promise.resolve().then(() => fail(config, 404, 'Incident not found'));
+    Object.assign(incident, {
+      status: body.status ?? incident.status,
+      severity: body.severity ?? incident.severity,
+      rootCause: body.rootCause ?? incident.rootCause,
+      correctiveAction: body.correctiveAction ?? incident.correctiveAction,
+      oshaRecordable: body.oshaRecordable ?? incident.oshaRecordable,
+      oshaClassification: body.oshaClassification ?? incident.oshaClassification,
+      daysAway: body.daysAway ?? incident.daysAway,
+      daysRestricted: body.daysRestricted ?? incident.daysRestricted,
+      injuryCategory: body.injuryCategory ?? incident.injuryCategory,
+      bodyPart: body.bodyPart ?? incident.bodyPart,
+    });
+    return Promise.resolve(ok(config, { incident }));
   }
 
   // Toolbox talks
