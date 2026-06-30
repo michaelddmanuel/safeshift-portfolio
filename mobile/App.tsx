@@ -4,13 +4,13 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   clearSession,
   confirmTask,
@@ -48,6 +48,14 @@ const DEMO_EMAIL: Record<string, string> = {
 type Tab = 'home' | 'tasks' | 'certs' | 'profile';
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppInner />
+    </SafeAreaProvider>
+  );
+}
+
+function AppInner() {
   const [booting, setBooting] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
 
