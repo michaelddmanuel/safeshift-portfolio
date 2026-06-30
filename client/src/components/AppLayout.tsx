@@ -60,12 +60,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-slate-50">
       <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white lg:block">
         <div className="sticky top-0 flex h-screen flex-col p-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="relative overflow-hidden rounded-2xl border border-brand-soft bg-brand-soft p-4">
+            <span className="brand-accent-stripe absolute inset-x-0 top-0 h-1" />
             <div className="text-brand">
               <BrandLockup />
             </div>
-            <p className="mt-3 text-xs uppercase tracking-[0.14em] text-slate-400">Operations workspace</p>
-            <p className="mt-1 text-sm font-semibold leading-snug text-slate-700">{workspaceName}</p>
+            <p className="mt-3 text-xs uppercase tracking-[0.14em] text-brand/70">Operations workspace</p>
+            <p className="mt-1 text-sm font-semibold leading-snug text-slate-800">{workspaceName}</p>
           </div>
 
           <nav className="mt-5 space-y-1">
@@ -148,7 +149,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="text-brand lg:hidden">
             <BrandLockup />
           </div>
-          <p className="hidden text-sm font-semibold text-slate-700 lg:block">{workspaceName}</p>
+          <div className="hidden lg:block" />
           <div className="flex items-center gap-4">
             {IS_DEMO && (
               <span className="hidden rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 sm:inline">
