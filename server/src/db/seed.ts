@@ -1,4 +1,4 @@
-import { sequelize, Tenant, User, Site, CourseCatalog, Training, Certification } from '../models';
+import { sequelize, Tenant, User, Site, CourseCatalog, Training, Certification, ToolboxTalk } from '../models';
 import { computeCertStatus } from '../models/Certification';
 import { ROLES } from '../constants';
 import type { FeatureMap, SiteType } from '../constants';
@@ -259,6 +259,37 @@ async function seed(): Promise<void> {
         status: computeCertStatus(expiresAt, now),
       });
     }
+
+    // Toolbox Talks (§8.2) — daily pre-shift briefings with digital sign-in.
+    await ToolboxTalk.bulkCreate([
+      {
+        tenantId: tenant.id,
+        siteId: sites[0]!.id,
+        topic: 'Pre-Shift Safety Briefing',
+        description: 'Daily hazard review, PPE check, and job-specific hazards.',
+        scheduledAt: new Date(now.getTime() + 3 * 60 * 60 * 1000),
+        location: `${sites[0]!.name} — Muster Point A`,
+        facilitator: 'Marcus Hale',
+      },
+      {
+        tenantId: tenant.id,
+        siteId: sites[0]!.id,
+        topic: 'Heat Stress Awareness',
+        description: 'Recognizing and preventing heat-related illness on site.',
+        scheduledAt: addDays(now, 1),
+        location: `${sites[0]!.name} — Unit 4`,
+        facilitator: 'Dana Reyes',
+      },
+      {
+        tenantId: tenant.id,
+        siteId: sites[0]!.id,
+        topic: `${spec.safetyProgramLabels.programName} Refresher`,
+        description: 'Program-specific safety briefing and crew Q&A.',
+        scheduledAt: addDays(now, 2),
+        location: sites[0]!.name,
+        facilitator: 'Dana Reyes',
+      },
+    ]);
 
     console.log(`  ✓ ${spec.displayName} (${spec.slug})`);
   }
