@@ -1,0 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+/*
+  Brand theming (§5.3): utility classes like `bg-brand`, `text-brand`,
+  `border-brand` resolve to CSS variables at runtime. The active tenant's
+  TenantContext (and the login brand picker) set --brand-* on :root, so the
+  3-way toggle reskins the whole app instantly with zero component changes.
+*/
+@theme inline {
+  --color-brand: var(--brand-primary);
+  --color-brand-dark: var(--brand-primary-dark);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-contrast: var(--brand-secondary-contrast);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-contrast: var(--brand-contrast);
+}
+
+:root {
+  /* Neutral fallback until a tenant theme loads. */
+  --brand-primary: #1f2937;
+  --brand-primary-dark: #111827;
+  --brand-secondary: #6b7280;
+  --brand-accent: #2563eb;
+  --brand-contrast: #ffffff;
+  --brand-secondary-contrast: #ffffff;
+}
+
+/* Brand gradient (primary → darkened primary) for headers, hero panels, FABs. */
+.bg-brand-gradient {
+  background-image: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-dark));
+}
+
+/* A very light wash of the brand color for tinted surfaces/sidebars. */
+.bg-brand-soft {
+  background-color: color-mix(in srgb, var(--brand-primary) 7%, white);
+}
+.border-brand-soft {
+  border-color: color-mix(in srgb, var(--brand-primary) 18%, white);
+}
+.text-brand-secondary {
+  color: var(--brand-secondary);
+}
+.bg-brand-secondary {
+  background-color: var(--brand-secondary);
+}
+/* Accent stripe used under the top bar to reinforce the secondary brand hue. */
+.brand-accent-stripe {
+  background-image: linear-gradient(90deg, var(--brand-secondary), var(--brand-accent));
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Manrope, "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--brand-primary) 14%, white), transparent 36%),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--brand-secondary) 16%, white), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.07), transparent 55%),
+    linear-gradient(180deg, #f8fbff 0%, #eef2f8 100%);
+  color: #0f172a;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Sora, Manrope, "Segoe UI", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+#root {
+  position: relative;
+}
+
+#root::before {
+  content: '';
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.page-title {
+  font-size: 1.9rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  margin-top: 0.5rem;
+  max-width: 64ch;
+  color: #475569;
+  font-size: 0.96rem;
+}
+
+.section-card {
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(2, 6, 23, 0.05), 0 20px 40px -28px rgba(2, 6, 23, 0.3);
+}
+
+.muted-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+/* Respect reduced-motion preferences for the theme transition. */
+@media (prefers-reduced-motion: no-preference) {
+  .brand-transition {
+    transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Animated auth screen (ported from the original sasol-attendance AuthLayout):
+   floating brand "molecule" marks, 3D gradient bubbles, staggered entrance, and
+   a pulsing primary button. Brand-aware — bubbles/marks use the active brand.
+   ────────────────────────────────────────────────────────────────────────── */
+
+@keyframes float {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-20px) translateX(10px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+
+@keyframes moleculeFloat {
+  0% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+  25% { transform: translateY(-30px) translateX(20px) rotate(8deg) scale(1.05); }
+  50% { transform: translateY(10px) translateX(40px) rotate(-4deg) scale(1.1); }
+  75% { transform: translateY(30px) translateX(-20px) rotate(6deg) scale(1.05); }
+  100% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+}
+
+@keyframes slideFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseBtn {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* A 3D-looking sphere using the active brand color (replaces the blue bubbles). */
+.brand-bubble {
+  border-radius: 9999px;
+  background-image: linear-gradient(145deg, var(--brand-secondary), var(--brand-primary));
+  box-shadow:
+    inset -10px -10px 24px rgba(0, 0, 0, 0.22),
+    0 8px 24px color-mix(in srgb, var(--brand-primary) 35%, transparent);
+}
+
+.auth-hero-panel {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.12), transparent 35%),
+    radial-gradient(circle at 85% 80%, rgba(148, 163, 184, 0.18), transparent 42%),
+    linear-gradient(160deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.82) 45%, rgba(15, 23, 42, 0.86) 100%);
+}
+
+.auth-hero-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.32;
+}
+
+.auth-foreground-orb {
+  position: absolute;
+  border-radius: 9999px;
+  background-image: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.36), rgba(59, 130, 246, 0.12) 42%, rgba(15, 23, 42, 0.35) 100%);
+  box-shadow: 0 24px 40px -24px rgba(2, 6, 23, 0.7);
+}
+
+.auth-foreground-orb-a {
+  width: 118px;
+  height: 118px;
+  top: 18%;
+  right: 14%;
+  opacity: 0.42;
+}
+
+.auth-foreground-orb-b {
+  width: 84px;
+  height: 84px;
+  bottom: 34%;
+  left: 26%;
+  opacity: 0.35;
+  animation-delay: 2s;
+}
+
+.auth-foreground-ring {
+  position: absolute;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.auth-foreground-ring-a {
+  width: 126px;
+  height: 126px;
+  top: 9%;
+  right: 22%;
+  opacity: 0.36;
+}
+
+.auth-foreground-ring-b {
+  width: 90px;
+  height: 90px;
+  bottom: 26%;
+  left: 18%;
+  opacity: 0.3;
+  animation-delay: 1.2s;
+}
+
+.auth-floating-logo {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 24px -16px rgba(2, 6, 23, 0.85);
+  opacity: 0.95;
+  padding: 8px;
+}
+
+.auth-floating-logo-shell {
+  top: 13%;
+  right: 13%;
+}
+
+.auth-floating-logo-exxon {
+  top: 36%;
+  right: 8%;
+  animation-delay: 1.3s;
+}
+
+.auth-floating-logo-chevron {
+  bottom: 14%;
+  right: 20%;
+  animation-delay: 0.8s;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anim-float { animation: float 8s ease-in-out infinite; }
+  .anim-molecule { animation: moleculeFloat 20s ease-in-out infinite; }
+  .anim-slide-in { animation: slideFadeIn 0.5s ease-out both; }
+  .anim-pulse-hover:hover { animation: pulseBtn 2s ease-in-out infinite; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-slide-in { opacity: 1; }
+}
+
