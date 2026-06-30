@@ -1,7 +1,7 @@
 import { useTenant } from '../context/TenantContext';
-import { BrandLogo, ShieldMark } from './Logo';
+import { BrandMark, ShieldMark } from './Logo';
 
-/** SafeShift {Brand} lockup (§6) — the SafeShift shield beside the tenant name. */
+/** SafeShift {Brand} lockup (§6) — a single, uniform per-tenant brand mark. */
 export function BrandLockup({ compact = false }: { compact?: boolean }) {
   const { activeTenant } = useTenant();
   const slug = activeTenant?.slug;
@@ -9,12 +9,7 @@ export function BrandLockup({ compact = false }: { compact?: boolean }) {
   if (slug) {
     return (
       <div className="flex items-center">
-        <BrandLogo
-          slug={slug}
-          variant="wordmark"
-          height={compact ? 20 : 26}
-          className="max-h-7 w-auto object-contain"
-        />
+        <BrandMark slug={slug} size={compact ? 30 : 40} radius={12} chrome="plain" />
       </div>
     );
   }

@@ -1,10 +1,11 @@
 import type { CSSProperties } from 'react';
+import { cn } from '../lib/utils';
 
 /**
- * Original, non-trademarked brand marks for the SafeShift white-label demo
- * (§16 — placeholder marks, not the real Shell/Exxon/Chevron logos). Each is a
- * geometric HSE "shield" that takes the active brand colors, so it doubles as
- * the app logo, the login card logo, and the floating background marks.
+ * Brand marks for the SafeShift white-label demo. `ShieldMark`/`HexMark` are the
+ * neutral platform glyphs; the per-tenant Shell/ExxonMobil/Chevron logos are
+ * loaded from /logos as a uniform square-symbol set (pecten / interlocking-X /
+ * hallmark), rendered identically via `BrandMark`.
  */
 
 export interface MarkProps {
@@ -65,6 +66,48 @@ export function BrandLogo({
       className={className}
       style={{ height, width: 'auto' }}
     />
+  );
+}
+
+/**
+ * Uniform per-tenant brand mark: the square brand symbol centered in an
+ * identical chip with consistent internal padding, so Shell, ExxonMobil and
+ * Chevron always render at the same visual size regardless of their native
+ * aspect ratios. Returns null for the platform (no tenant) — callers fall back
+ * to `ShieldMark`.
+ */
+export function BrandMark({
+  slug,
+  size = 40,
+  radius = 12,
+  chrome = 'light',
+  className,
+}: {
+  slug: string | null | undefined;
+  size?: number;
+  radius?: number;
+  /** `light` = white chip (for dark backgrounds), `plain` = transparent. */
+  chrome?: 'light' | 'plain';
+  className?: string;
+}) {
+  const brand = getBrandLogo(slug);
+  if (!brand) return null;
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center justify-center overflow-hidden',
+        chrome === 'light' && 'bg-white ring-1 ring-black/5 shadow-sm',
+        className,
+      )}
+      style={{ width: size, height: size, borderRadius: radius }}
+    >
+      <img
+        src={brand.icon}
+        alt={`${brand.name} logo`}
+        style={{ width: '78%', height: '78%', objectFit: 'contain' }}
+      />
+    </span>
   );
 }
 

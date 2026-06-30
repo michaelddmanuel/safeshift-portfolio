@@ -5,7 +5,7 @@ import { tenantApi } from '../api/endpoints';
 import { IS_DEMO } from '../api/client';
 import { applyBrandTheme } from '../lib/theme';
 import { AuthBackground } from '../components/AuthBackground';
-import { BrandLogo, HexMark, ShieldMark } from '../components/Logo';
+import { BrandLogo, BrandMark, HexMark, ShieldMark } from '../components/Logo';
 import type { Tenant } from '../types';
 
 const DEMO_PASSWORD = 'Passw0rd!';
@@ -151,12 +151,7 @@ export function LoginPage() {
           {/* Logo */}
           <div className="flex flex-col items-center text-center">
             {selected ? (
-              <BrandLogo
-                slug={selected.slug}
-                variant="wordmark"
-                height={54}
-                className="max-h-14 w-auto object-contain"
-              />
+              <BrandMark slug={selected.slug} size={72} radius={18} chrome="plain" />
             ) : (
               <ShieldMark size={56} style={{ filter: 'drop-shadow(0 6px 14px rgba(15,23,42,0.18))' }} />
             )}
@@ -354,8 +349,8 @@ function BrandSwatch({
           : 'border-white/25 bg-slate-950/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-white/40 hover:bg-white/12')
       }
     >
-      <div className="flex h-8 items-center justify-center rounded-md bg-white/90 px-2">
-        <BrandLogo slug={slug} variant="wordmark" height={20} className="max-h-5 w-auto object-contain" />
+      <div className="flex h-10 items-center justify-center rounded-md bg-white px-2">
+        <BrandLogo slug={slug} variant="icon" height={26} className="w-auto object-contain" />
       </div>
       <p className="mt-2 text-xs font-semibold text-white/85">{label}</p>
     </button>
