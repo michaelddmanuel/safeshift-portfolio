@@ -68,7 +68,11 @@ The Vite dev server proxies `/api` to the backend, so no CORS setup is needed in
 
 ## Mobile app (Expo SDK 54)
 
-A staff-focused Expo app is included at `mobile/` (TypeScript, Expo SDK 54).
+A worker-focused Expo app is included at `mobile/` (TypeScript, Expo SDK 54). It
+lets general crew **log in and confirm completion** of their tasks — toolbox
+sign-ins, training attendance, and safety acknowledgements — plus view their
+certification status. Brand-themed per tenant, with a Home / Tasks / Certs /
+Profile tab layout.
 
 ```bash
 # from repo root
@@ -80,12 +84,11 @@ Then launch with Expo Go or simulator:
 - `npm run mobile:ios`
 - `npm run mobile:android`
 
-API base URL defaults:
+**Runs offline by default (demo mode):** with no backend configured it uses
+seeded data and stores confirmations locally on the device, so it works in Expo
+Go on any phone and as a web export with zero setup.
 
-- iOS simulator / web: `http://localhost:4100/api`
-- Android emulator: `http://10.0.2.2:4100/api`
-
-For a physical device, set your LAN URL before starting Expo:
+To point it at the real SafeShift API, set `EXPO_PUBLIC_API_URL` before starting:
 
 ```bash
 EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:4100/api npm run mobile:start
