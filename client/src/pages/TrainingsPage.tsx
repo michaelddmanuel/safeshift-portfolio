@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { trainingApi } from '../api/endpoints';
-import { useTenant } from '../context/TenantContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Pill } from '../components/StatusBadge';
+import { ListSkeleton } from '../components/Skeleton';
+import { useAttendTraining, useTrainings } from '../lib/queries';
 import { formatDateTime } from '../lib/utils';
 import type { Training } from '../types';
 
@@ -13,10 +13,8 @@ type TrainingStatusFilter = (typeof STATUS_FILTERS)[number];
 
 export function TrainingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { activeTenant } = useTenant();
-  const [trainings, setTrainings] = useState<Training[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { data: trainings = [], isLoading } = useTrainings();
+  const attend = useAttendTraining();
   const [signedIn, setSignedIn] = useState<Set<string>>(new Set());
   const statusFilter = (searchParams.get('status') ?? 'all') as TrainingStatusFilter;
 
@@ -31,24 +29,8 @@ export function TrainingsPage() {
     setSearchParams(nextParams, { replace: true });
   }
 
-  function load() {
-    setLoading(true);
-    trainingApi
-      .list()
-      .then(setTrainings)
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(load, [activeTenant?.slug]);
-
-  async function attend(t: Training) {
-    setBusyId(t.id);
-    try {
-      await trainingApi.attend(t.id);
-      setSignedIn((prev) => new Set(prev).add(t.id));
-    } finally {
-      setBusyId(null);
-    }
+  function onAttend(t: Training) {
+    attend.mutate(t.id, { onSuccess: () => setSignedIn((prev) => new Set(prev).add(t.id)) });
   }
 
   return (
@@ -79,13 +61,16 @@ export function TrainingsPage() {
         })}
       </div>
 
-      {loading ? (
-        <p className="mt-6 text-sm text-slate-500">Loading…</p>
+      {isLoading ? (
+        <div className="mt-6">
+          <ListSkeleton />
+        </div>
       ) : (
         <div className="mt-6 space-y-3">
           {filteredTrainings.map((t) => {
             const upcoming = t.status === 'scheduled';
             const done = signedIn.has(t.id);
+            const busy = attend.isPending && attend.variables === t.id;
             return (
               <Card
                 key={t.id}
@@ -114,10 +99,10 @@ export function TrainingsPage() {
                   {upcoming && (
                     <Button
                       variant={done ? 'outline' : 'brand'}
-                      isDisabled={busyId === t.id || done}
-                      onPress={() => attend(t)}
+                      isDisabled={busy || done}
+                      onPress={() => onAttend(t)}
                     >
-                      {done ? 'Signed in ✓' : busyId === t.id ? 'Signing in…' : 'Sign in'}
+                      {done ? 'Signed in ✓' : busy ? 'Signing in…' : 'Sign in'}
                     </Button>
                   )}
                 </div>

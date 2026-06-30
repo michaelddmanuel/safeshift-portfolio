@@ -1,28 +1,27 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardApi } from '../api/endpoints';
-import { useTenant } from '../context/TenantContext';
 import { Card, StatCard } from '../components/Card';
 import { Pill } from '../components/StatusBadge';
+import { Skeleton, StatGridSkeleton } from '../components/Skeleton';
 import { ShieldIcon, UsersIcon, CalendarIcon, BarChartIcon } from '../components/Icons';
+import { useDashboard } from '../lib/queries';
 import { formatDateTime } from '../lib/utils';
-import type { Dashboard } from '../types';
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { activeTenant } = useTenant();
-  const [data, setData] = useState<Dashboard | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useDashboard();
 
-  useEffect(() => {
-    setLoading(true);
-    dashboardApi
-      .get()
-      .then(setData)
-      .finally(() => setLoading(false));
-  }, [activeTenant?.slug]);
-
-  if (loading) return <p className="text-sm text-slate-500">Loading dashboard…</p>;
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="section-card rounded-2xl p-6 sm:p-8">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="mt-3 h-9 w-72" />
+          <Skeleton className="mt-3 h-4 w-96" />
+        </div>
+        <StatGridSkeleton />
+      </div>
+    );
+  }
   if (!data) return <p className="text-sm text-slate-500">No data.</p>;
 
   if (data.scope === 'platform') {

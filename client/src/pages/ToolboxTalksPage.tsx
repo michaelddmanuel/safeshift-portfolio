@@ -1,36 +1,18 @@
-import { useEffect, useState } from 'react';
-import { toolboxApi } from '../api/endpoints';
-import { useTenant } from '../context/TenantContext';
+import { useState } from 'react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { ListSkeleton } from '../components/Skeleton';
+import { useSigninToolbox, useToolboxTalks } from '../lib/queries';
 import { formatDateTime } from '../lib/utils';
 import type { ToolboxTalk } from '../types';
 
 export function ToolboxTalksPage() {
-  const { activeTenant } = useTenant();
-  const [talks, setTalks] = useState<ToolboxTalk[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { data: talks = [], isLoading } = useToolboxTalks();
+  const signinMut = useSigninToolbox();
   const [signedIn, setSignedIn] = useState<Set<string>>(new Set());
 
-  function load() {
-    setLoading(true);
-    toolboxApi
-      .list()
-      .then(setTalks)
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(load, [activeTenant?.slug]);
-
-  async function signin(talk: ToolboxTalk) {
-    setBusyId(talk.id);
-    try {
-      await toolboxApi.signin(talk.id);
-      setSignedIn((prev) => new Set(prev).add(talk.id));
-    } finally {
-      setBusyId(null);
-    }
+  function onSignin(talk: ToolboxTalk) {
+    signinMut.mutate(talk.id, { onSuccess: () => setSignedIn((prev) => new Set(prev).add(talk.id)) });
   }
 
   return (
@@ -40,13 +22,16 @@ export function ToolboxTalksPage() {
         Daily pre-shift safety briefings and digital sign-in.
       </p>
 
-      {loading ? (
-        <p className="mt-6 text-sm text-slate-500">Loading…</p>
+      {isLoading ? (
+        <div className="mt-6">
+          <ListSkeleton />
+        </div>
       ) : (
         <div className="mt-6 space-y-3">
           {talks.map((talk) => {
             const done = signedIn.has(talk.id);
             const isUpcoming = new Date(talk.scheduledAt) > new Date();
+            const busy = signinMut.isPending && signinMut.variables === talk.id;
             return (
               <Card
                 key={talk.id}
@@ -71,10 +56,10 @@ export function ToolboxTalksPage() {
                   {isUpcoming && (
                     <Button
                       variant={done ? 'outline' : 'brand'}
-                      isDisabled={busyId === talk.id || done}
-                      onPress={() => signin(talk)}
+                      isDisabled={busy || done}
+                      onPress={() => onSignin(talk)}
                     >
-                      {done ? 'Signed in ✓' : busyId === talk.id ? 'Signing in…' : 'Sign in'}
+                      {done ? 'Signed in ✓' : busy ? 'Signing in…' : 'Sign in'}
                     </Button>
                   )}
                 </div>

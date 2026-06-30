@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { certApi } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
-import { useTenant } from '../context/TenantContext';
 import { Card, StatCard } from '../components/Card';
 import { Button } from '../components/Button';
 import { StatusBadge } from '../components/StatusBadge';
+import { Skeleton, StatGridSkeleton } from '../components/Skeleton';
+import { useCertifications, useCertSummary, useRunCertScan } from '../lib/queries';
 import { formatDate } from '../lib/utils';
-import type { Certification, CertSummary } from '../types';
 
 const CAN_SCAN = ['platform_admin', 'hse_manager', 'supervisor'];
 const STATUS_FILTERS = ['all', 'active', 'expiring', 'expired'] as const;
@@ -16,12 +14,9 @@ type StatusFilter = (typeof STATUS_FILTERS)[number];
 export function CertificationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { activeTenant } = useTenant();
-  const [certs, setCerts] = useState<Certification[]>([]);
-  const [summary, setSummary] = useState<CertSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [scanning, setScanning] = useState(false);
-  const [scanMsg, setScanMsg] = useState<string | null>(null);
+  const { data: certs = [], isLoading } = useCertifications();
+  const { data: summary } = useCertSummary();
+  const scan = useRunCertScan();
 
   const canScan = user ? CAN_SCAN.includes(user.role) : false;
   const statusFilter = (searchParams.get('status') ?? 'all') as StatusFilter;
@@ -35,35 +30,6 @@ export function CertificationsPage() {
     setSearchParams(nextParams, { replace: true });
   }
 
-  function load() {
-    setLoading(true);
-    Promise.all([certApi.list(), certApi.summary()])
-      .then(([c, s]) => {
-        setCerts(c);
-        setSummary(s);
-      })
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(load, [activeTenant?.slug]);
-
-  async function runScan() {
-    setScanning(true);
-    setScanMsg(null);
-    try {
-      const { result } = await certApi.scan();
-      setScanMsg(
-        `Scan complete — ${result.scanned} checked, ${result.updated} updated, ` +
-          `${result.alertsSent} alert(s) sent.`,
-      );
-      load();
-    } catch {
-      setScanMsg('Scan failed.');
-    } finally {
-      setScanning(false);
-    }
-  }
-
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
@@ -75,17 +41,13 @@ export function CertificationsPage() {
           </p>
         </div>
         {canScan && (
-          <Button variant="outline" onPress={runScan} isDisabled={scanning}>
-            {scanning ? 'Scanning…' : 'Run expiry scan'}
+          <Button variant="outline" onPress={() => scan.mutate()} isDisabled={scan.isPending}>
+            {scan.isPending ? 'Scanning…' : 'Run expiry scan'}
           </Button>
         )}
       </div>
 
-      {scanMsg && (
-        <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600">{scanMsg}</p>
-      )}
-
-      {summary && (
+      {summary ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total certifications" value={summary.total} hint="across active workforce" accent />
           <StatCard label="Active" value={summary.active} />
@@ -95,6 +57,10 @@ export function CertificationsPage() {
             hint={`${summary.expiringIn30} within 30 days`}
           />
           <StatCard label="Expired" value={summary.expired} hint="action required" />
+        </div>
+      ) : (
+        <div className="mt-6">
+          <StatGridSkeleton />
         </div>
       )}
 
@@ -120,8 +86,12 @@ export function CertificationsPage() {
       </div>
 
       <Card className="mt-6 overflow-hidden p-0">
-        {loading ? (
-          <p className="p-5 text-sm text-slate-500">Loading certifications…</p>
+        {isLoading ? (
+          <div className="space-y-3 p-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-6 w-full" />
+            ))}
+          </div>
         ) : filteredCerts.length === 0 ? (
           <p className="p-5 text-sm text-slate-400">No certifications on record.</p>
         ) : (
