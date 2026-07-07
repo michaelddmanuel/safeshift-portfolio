@@ -10,7 +10,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon, FeaturedIcon, LogoMark, type IconName } from './src/icons';
 import {
   clearSession,
   confirmTask,
@@ -28,15 +29,16 @@ import {
 } from './src/api';
 
 const PALETTE = {
-  bg: '#f1f5f9',
-  card: '#ffffff',
-  border: '#e2e8f0',
-  text: '#0f172a',
-  sub: '#64748b',
-  muted: '#94a3b8',
-  good: '#16a34a',
-  warn: '#d97706',
-  bad: '#dc2626',
+  bg: '#F9FAFB',
+  card: '#FFFFFF',
+  border: '#EAECF0',
+  text: '#101828',
+  sub: '#475467',
+  muted: '#667085',
+  faint: '#98A2B3',
+  good: '#079455',
+  warn: '#DC6803',
+  bad: '#D92D20',
 };
 
 const DEMO_EMAIL: Record<string, string> = {
@@ -112,9 +114,7 @@ function LoginScreen({ onAuthed }: { onAuthed: (s: Session) => void }) {
     <SafeAreaView style={styles.root}>
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.loginScroll} keyboardShouldPersistTaps="handled">
-        <View style={[styles.logoBadge, { backgroundColor: accent }]}>
-          <Text style={styles.logoBadgeText}>S</Text>
-        </View>
+        <LogoMark size={64} color={accent} />
         <Text style={styles.loginTitle}>SafeShift</Text>
         <Text style={styles.loginSubtitle}>Crew check-in &amp; safety confirmations</Text>
 
@@ -182,6 +182,7 @@ function LoginScreen({ onAuthed }: { onAuthed: (s: Session) => void }) {
 // ── Main app shell ────────────────────────────────────────────────────────────
 function MainApp({ session, onSignOut }: { session: Session; onSignOut: () => void }) {
   const accent = session.tenant?.theme.primary ?? PALETTE.text;
+  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('home');
 
   const [tasks, setTasks] = useState<TaskView[]>([]);
@@ -220,10 +221,10 @@ function MainApp({ session, onSignOut }: { session: Session; onSignOut: () => vo
   }
 
   return (
-    <SafeAreaView style={styles.root}>
+    <View style={styles.root}>
       <StatusBar style="light" />
-      <View style={[styles.header, { backgroundColor: accent }]}>
-        <View>
+      <View style={[styles.header, { backgroundColor: accent, paddingTop: Math.max(insets.top, 36) + 16 }]}>
+        <View style={{ flex: 1 }}>
           <Text style={styles.headerBrand}>
             SafeShift{session.tenant ? ` · ${session.tenant.theme.logoText}` : ''}
           </Text>
@@ -258,12 +259,12 @@ function MainApp({ session, onSignOut }: { session: Session; onSignOut: () => vo
           {tab === 'tasks' && (
             <TasksTab accent={accent} pending={pending} done={done} onConfirm={onConfirm} />
           )}
-          {tab === 'certs' && <CertsTab certs={certs} />}
+          {tab === 'certs' && <CertsTab certs={certs} accent={accent} />}
           {tab === 'profile' && <ProfileTab session={session} onSignOut={signOut} />}
         </ScrollView>
       )}
 
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
         <TabButton label="Home" icon="home" active={tab === 'home'} accent={accent} onPress={() => setTab('home')} />
         <TabButton
           label="Tasks"
@@ -282,7 +283,7 @@ function MainApp({ session, onSignOut }: { session: Session; onSignOut: () => vo
           onPress={() => setTab('profile')}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -314,21 +315,23 @@ function HomeTab({
       {session.tenant ? <Text style={styles.programLine}>{session.tenant.safetyProgramLabels.programName}</Text> : null}
 
       <View style={styles.statRow}>
-        <StatCard value={pendingCount} label="To confirm" tone={pendingCount ? 'warn' : 'good'} />
-        <StatCard value={doneCount} label="Completed" tone="good" />
-        <StatCard value={expiring} label="Certs due" tone={expiring ? 'bad' : 'good'} />
+        <StatCard value={pendingCount} label="To confirm" tone={pendingCount ? 'warn' : 'good'} icon="clock" />
+        <StatCard value={doneCount} label="Completed" tone="good" icon="checkCircle" />
+        <StatCard value={expiring} label="Certs due" tone={expiring ? 'bad' : 'good'} icon="certs" />
       </View>
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Today&apos;s tasks</Text>
-        <Pressable onPress={onSeeAll}>
+        <Pressable onPress={onSeeAll} style={styles.seeAll}>
           <Text style={[styles.link, { color: accent }]}>See all</Text>
+          <Icon name="chevronRight" size={16} color={accent} />
         </Pressable>
       </View>
 
       {tasks.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>All caught up ✓</Text>
+          <Icon name="checkCircle" size={30} color={PALETTE.good} />
+          <Text style={styles.emptyTitle}>All caught up</Text>
           <Text style={styles.emptySub}>You have no outstanding confirmations.</Text>
         </View>
       ) : (
@@ -357,7 +360,8 @@ function TasksTab({
       <Text style={styles.groupLabel}>To confirm ({pending.length})</Text>
       {pending.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>Nothing pending ✓</Text>
+          <Icon name="checkCircle" size={30} color={PALETTE.good} />
+          <Text style={styles.emptyTitle}>Nothing pending</Text>
           <Text style={styles.emptySub}>Great work — everything is confirmed.</Text>
         </View>
       ) : (
@@ -376,26 +380,33 @@ function TasksTab({
   );
 }
 
-function CertsTab({ certs }: { certs: Cert[] }) {
+function CertsTab({ certs, accent }: { certs: Cert[]; accent: string }) {
   return (
     <View>
       <Text style={styles.pageTitle}>My certifications</Text>
       <Text style={styles.pageSub}>Keep these current to stay site-ready.</Text>
       {certs.map((c) => (
         <View key={c.id} style={styles.card}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.taskTitle}>{c.name}</Text>
-            <StatusPill status={c.status} />
+          <View style={styles.taskHead}>
+            <FeaturedIcon name="award" color={accent} bg="#F2F4F7" size={40} />
+            <View style={{ flex: 1 }}>
+              <View style={styles.rowBetween}>
+                <Text style={[styles.taskTitle, { flex: 1, marginRight: 8 }]}>{c.name}</Text>
+                <StatusPill status={c.status} />
+              </View>
+              <View style={styles.metaRow}>
+                <Icon name="calendar" size={14} color={PALETTE.faint} />
+                <Text style={styles.taskMeta}>
+                  {c.expiresAt ? `Expires ${c.expiresAt}` : 'No expiry'}
+                  {c.daysToExpiry !== null
+                    ? c.daysToExpiry < 0
+                      ? ` · ${Math.abs(c.daysToExpiry)}d overdue`
+                      : ` · ${c.daysToExpiry}d left`
+                    : ''}
+                </Text>
+              </View>
+            </View>
           </View>
-          <Text style={styles.taskMeta}>
-            {c.issuer ? `${c.issuer} · ` : ''}
-            {c.expiresAt ? `Expires ${c.expiresAt}` : 'No expiry'}
-            {c.daysToExpiry !== null
-              ? c.daysToExpiry < 0
-                ? ` · ${Math.abs(c.daysToExpiry)}d overdue`
-                : ` · ${c.daysToExpiry}d left`
-              : ''}
-          </Text>
         </View>
       ))}
       {certs.length === 0 ? <Text style={styles.mutedText}>No certifications on record.</Text> : null}
@@ -408,13 +419,16 @@ function ProfileTab({ session, onSignOut }: { session: Session; onSignOut: () =>
     <View>
       <Text style={styles.pageTitle}>Profile</Text>
       <View style={styles.card}>
-        <Field label="Name" value={session.user.fullName} />
-        <Field label="Email" value={session.user.email} />
-        <Field label="Role" value={prettyRole(session.user.role)} />
-        <Field label="Company" value={session.tenant?.displayName ?? 'Platform'} />
-        {session.tenant ? <Field label="Safety program" value={session.tenant.safetyProgramLabels.programName} /> : null}
+        <Field icon="user" label="Name" value={session.user.fullName} />
+        <Field icon="mail" label="Email" value={session.user.email} />
+        <Field icon="briefcase" label="Role" value={prettyRole(session.user.role)} />
+        <Field icon="certs" label="Company" value={session.tenant?.displayName ?? 'Platform'} last={!session.tenant} />
+        {session.tenant ? (
+          <Field icon="shieldCheck" label="Safety program" value={session.tenant.safetyProgramLabels.programName} last />
+        ) : null}
       </View>
       <Pressable onPress={onSignOut} style={({ pressed }) => [styles.signOutBtn, { opacity: pressed ? 0.8 : 1 }]}>
+        <Icon name="logout" size={18} color="#B42318" />
         <Text style={styles.signOutText}>Sign out</Text>
       </Pressable>
       {USE_DEMO ? <Text style={styles.demoNote}>Demo mode · seeded data, no live backend</Text> : null}
@@ -427,9 +441,11 @@ function TaskCard({ task, accent, onConfirm }: { task: TaskView; accent: string;
   const confirmed = Boolean(task.confirmedAt);
   return (
     <View style={[styles.card, confirmed ? styles.cardDone : null]}>
-      <View style={styles.rowBetween}>
-        <View style={styles.kindTag}>
+      <View style={styles.taskHead}>
+        <FeaturedIcon name={kindIcon(task.kind)} color={accent} bg="#F2F4F7" size={40} />
+        <View style={{ flex: 1 }}>
           <Text style={styles.kindTagText}>{kindLabel(task.kind)}</Text>
+          <Text style={styles.taskTitle}>{task.title}</Text>
         </View>
         {task.mandatory ? (
           <View style={styles.mandatoryTag}>
@@ -437,16 +453,24 @@ function TaskCard({ task, accent, onConfirm }: { task: TaskView; accent: string;
           </View>
         ) : null}
       </View>
-      <Text style={styles.taskTitle}>{task.title}</Text>
       {task.detail ? <Text style={styles.taskDetail}>{task.detail}</Text> : null}
-      <Text style={styles.taskMeta}>
-        {task.whenISO ? formatWhen(task.whenISO) : 'Anytime'}
-        {task.location ? ` · ${task.location}` : ''}
-      </Text>
+      <View style={styles.metaRow}>
+        <Icon name="calendar" size={14} color={PALETTE.faint} />
+        <Text style={styles.taskMeta}>{task.whenISO ? formatWhen(task.whenISO) : 'Anytime'}</Text>
+      </View>
+      {task.location ? (
+        <View style={styles.metaRow}>
+          <Icon name="pin" size={14} color={PALETTE.faint} />
+          <Text style={styles.taskMeta}>{task.location}</Text>
+        </View>
+      ) : null}
 
       {confirmed ? (
         <View style={styles.confirmedRow}>
-          <Text style={[styles.confirmedText, { color: PALETTE.good }]}>✓ Confirmed</Text>
+          <View style={styles.confirmedLeft}>
+            <Icon name="checkCircle" size={16} color={PALETTE.good} />
+            <Text style={[styles.confirmedText, { color: PALETTE.good }]}>Confirmed</Text>
+          </View>
           <Text style={styles.confirmedAt}>{formatWhen(task.confirmedAt as string)}</Text>
         </View>
       ) : (
@@ -461,10 +485,11 @@ function TaskCard({ task, accent, onConfirm }: { task: TaskView; accent: string;
   );
 }
 
-function StatCard({ value, label, tone }: { value: number; label: string; tone: 'good' | 'warn' | 'bad' }) {
+function StatCard({ value, label, tone, icon }: { value: number; label: string; tone: 'good' | 'warn' | 'bad'; icon: IconName }) {
   const color = tone === 'good' ? PALETTE.good : tone === 'warn' ? PALETTE.warn : PALETTE.bad;
   return (
     <View style={styles.statCard}>
+      <Icon name={icon} size={18} color={color} strokeWidth={2.2} />
       <Text style={[styles.statValue, { color }]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -473,23 +498,27 @@ function StatCard({ value, label, tone }: { value: number; label: string; tone: 
 
 function StatusPill({ status }: { status: Cert['status'] }) {
   const map = {
-    active: { bg: '#dcfce7', fg: '#166534', label: 'Active' },
-    expiring: { bg: '#fef9c3', fg: '#854d0e', label: 'Expiring' },
-    expired: { bg: '#fee2e2', fg: '#991b1b', label: 'Expired' },
+    active: { bg: '#ECFDF3', fg: '#067647', dot: '#17B26A', label: 'Active' },
+    expiring: { bg: '#FFFAEB', fg: '#B54708', dot: '#F79009', label: 'Expiring' },
+    expired: { bg: '#FEF3F2', fg: '#B42318', dot: '#F04438', label: 'Expired' },
   } as const;
   const s = map[status];
   return (
     <View style={[styles.pill, { backgroundColor: s.bg }]}>
+      <View style={[styles.pillDot, { backgroundColor: s.dot }]} />
       <Text style={[styles.pillText, { color: s.fg }]}>{s.label}</Text>
     </View>
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ icon, label, value, last }: { icon: IconName; label: string; value: string; last?: boolean }) {
   return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <Text style={styles.fieldValue}>{value}</Text>
+    <View style={[styles.field, last ? styles.fieldLast : null]}>
+      <Icon name={icon} size={18} color={PALETTE.muted} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.fieldLabel}>{label}</Text>
+        <Text style={styles.fieldValue}>{value}</Text>
+      </View>
     </View>
   );
 }
@@ -513,7 +542,7 @@ function TabButton({
   return (
     <Pressable style={styles.tabBtn} onPress={onPress}>
       <View>
-        <Text style={[styles.tabGlyph, { color }]}>{glyph(icon)}</Text>
+        <Icon name={icon} size={23} color={color} strokeWidth={active ? 2.4 : 2} />
         {badge ? (
           <View style={styles.tabBadge}>
             <Text style={styles.tabBadgeText}>{badge}</Text>
@@ -542,8 +571,8 @@ function greeting(): string {
 function kindLabel(kind: Task['kind']): string {
   return kind === 'toolbox' ? 'Toolbox talk' : kind === 'training' ? 'Training' : 'Acknowledgement';
 }
-function glyph(icon: 'home' | 'tasks' | 'certs' | 'profile'): string {
-  return icon === 'home' ? '⌂' : icon === 'tasks' ? '☑' : icon === 'certs' ? '🛡' : '☺';
+function kindIcon(kind: Task['kind']): IconName {
+  return kind === 'toolbox' ? 'toolbox' : kind === 'training' ? 'training' : 'shieldCheck';
 }
 function formatWhen(iso: string): string {
   const d = new Date(iso);
@@ -570,10 +599,10 @@ const styles = StyleSheet.create({
   brandPill: { borderWidth: 1, borderColor: PALETTE.border, backgroundColor: '#fff', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
   brandPillText: { fontSize: 13, fontWeight: '700', color: PALETTE.sub },
 
-  card: { width: '100%', backgroundColor: PALETTE.card, borderRadius: 16, borderWidth: 1, borderColor: PALETTE.border, padding: 16, marginTop: 14 },
-  cardDone: { backgroundColor: '#f8fafc' },
+  card: { width: '100%', backgroundColor: PALETTE.card, borderRadius: 16, borderWidth: 1, borderColor: PALETTE.border, padding: 20, marginTop: 14, shadowColor: '#101828', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
+  cardDone: { backgroundColor: '#F9FAFB' },
   label: { fontSize: 13, fontWeight: '600', color: '#334155' },
-  input: { marginTop: 6, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, fontSize: 15, color: PALETTE.text, backgroundColor: '#fff' },
+  input: { marginTop: 6, borderWidth: 1, borderColor: '#D0D5DD', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, fontSize: 15, color: PALETTE.text, backgroundColor: '#fff' },
   errorText: { color: PALETTE.bad, fontSize: 13, marginTop: 10 },
   primaryBtn: { marginTop: 16, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
@@ -581,9 +610,9 @@ const styles = StyleSheet.create({
   demoNote: { color: PALETTE.muted, fontSize: 12, marginTop: 18, textAlign: 'center' },
 
   // Header
-  header: { paddingTop: 12, paddingBottom: 18, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerBrand: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700' },
-  headerName: { color: '#fff', fontSize: 22, fontWeight: '800', marginTop: 2 },
+  header: { paddingBottom: 22, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerBrand: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
+  headerName: { color: '#fff', fontSize: 22, fontWeight: '800', marginTop: 4 },
   headerAvatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   headerAvatarText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
@@ -593,14 +622,15 @@ const styles = StyleSheet.create({
   greeting: { fontSize: 16, color: PALETTE.sub },
   greetingName: { fontSize: 26, fontWeight: '800', color: PALETTE.text },
   programLine: { fontSize: 13, color: PALETTE.muted, marginTop: 2 },
-  statRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
-  statCard: { flex: 1, backgroundColor: PALETTE.card, borderRadius: 14, borderWidth: 1, borderColor: PALETTE.border, padding: 14, alignItems: 'flex-start' },
-  statValue: { fontSize: 26, fontWeight: '800' },
+  statRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  statCard: { flex: 1, backgroundColor: PALETTE.card, borderRadius: 14, borderWidth: 1, borderColor: PALETTE.border, padding: 14, alignItems: 'flex-start', shadowColor: '#101828', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  statValue: { fontSize: 24, fontWeight: '800', marginTop: 10 },
   statLabel: { fontSize: 12, color: PALETTE.sub, marginTop: 2, fontWeight: '600' },
 
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, marginBottom: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: PALETTE.text },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, marginBottom: 4 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: PALETTE.text },
   link: { fontSize: 14, fontWeight: '700' },
+  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 
   pageTitle: { fontSize: 24, fontWeight: '800', color: PALETTE.text },
   pageSub: { fontSize: 14, color: PALETTE.sub, marginTop: 4 },
@@ -608,38 +638,42 @@ const styles = StyleSheet.create({
 
   // Task card
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  kindTag: { backgroundColor: '#eef2f7', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  kindTagText: { fontSize: 11, fontWeight: '700', color: PALETTE.sub, textTransform: 'uppercase', letterSpacing: 0.5 },
-  mandatoryTag: { backgroundColor: '#fef2f2', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  mandatoryText: { fontSize: 11, fontWeight: '700', color: '#b91c1c' },
-  taskTitle: { fontSize: 16, fontWeight: '700', color: PALETTE.text, marginTop: 10, flexShrink: 1 },
-  taskDetail: { fontSize: 13, color: PALETTE.sub, marginTop: 4 },
-  taskMeta: { fontSize: 12, color: PALETTE.muted, marginTop: 8 },
-  confirmBtn: { marginTop: 14, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  taskHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  kindTag: { backgroundColor: '#F2F4F7', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  kindTagText: { fontSize: 11, fontWeight: '700', color: PALETTE.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  mandatoryTag: { backgroundColor: '#FEF3F2', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  mandatoryText: { fontSize: 11, fontWeight: '700', color: '#B42318' },
+  taskTitle: { fontSize: 16, fontWeight: '700', color: PALETTE.text, marginTop: 3 },
+  taskDetail: { fontSize: 13, color: PALETTE.sub, marginTop: 10 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  taskMeta: { fontSize: 12.5, color: PALETTE.muted },
+  confirmBtn: { marginTop: 16, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   confirmBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  confirmedRow: { marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  confirmedRow: { marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  confirmedLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   confirmedText: { fontWeight: '700', fontSize: 14 },
   confirmedAt: { color: PALETTE.muted, fontSize: 12 },
 
   // Empty
-  emptyCard: { backgroundColor: PALETTE.card, borderRadius: 14, borderWidth: 1, borderColor: PALETTE.border, padding: 20, marginTop: 12, alignItems: 'center' },
+  emptyCard: { backgroundColor: PALETTE.card, borderRadius: 14, borderWidth: 1, borderColor: PALETTE.border, padding: 24, marginTop: 12, alignItems: 'center', gap: 8 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: PALETTE.text },
   emptySub: { fontSize: 13, color: PALETTE.sub, marginTop: 4, textAlign: 'center' },
 
   // Pills / fields
-  pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pillDot: { width: 6, height: 6, borderRadius: 3 },
   pillText: { fontSize: 12, fontWeight: '700' },
-  field: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  field: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' },
+  fieldLast: { borderBottomWidth: 0 },
   fieldLabel: { fontSize: 12, color: PALETTE.muted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.6 },
   fieldValue: { fontSize: 15, color: PALETTE.text, marginTop: 2, fontWeight: '600' },
-  signOutBtn: { marginTop: 16, borderRadius: 12, borderWidth: 1, borderColor: '#fecaca', backgroundColor: '#fef2f2', paddingVertical: 13, alignItems: 'center' },
-  signOutText: { color: '#b91c1c', fontWeight: '700', fontSize: 15 },
+  signOutBtn: { marginTop: 16, borderRadius: 12, borderWidth: 1, borderColor: '#FECDCA', backgroundColor: '#FEF3F2', paddingVertical: 13, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' },
+  signOutText: { color: '#B42318', fontWeight: '700', fontSize: 15 },
 
   // Tab bar
-  tabBar: { flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: PALETTE.border, paddingTop: 8, paddingBottom: 20 },
-  tabBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  tabGlyph: { fontSize: 20 },
-  tabLabel: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+  tabBar: { flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: PALETTE.border, paddingTop: 10 },
+  tabBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  tabLabel: { fontSize: 11, fontWeight: '600' },
   tabBadge: { position: 'absolute', top: -4, right: -10, backgroundColor: '#dc2626', borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   tabBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
 });
