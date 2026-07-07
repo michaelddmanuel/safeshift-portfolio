@@ -54,6 +54,7 @@ export interface User {
   employeeId: string | null;
   phone: string | null;
   isContractor: boolean;
+  isActive: boolean;
 }
 
 export type CertStatus = 'active' | 'expiring' | 'expired';
@@ -160,6 +161,22 @@ export interface ToolboxTalkDetail extends ToolboxTalk {
 export interface ManagedUser extends User {
   certs: { active: number; expiring: number; expired: number };
 }
+
+/** Roles a tenant admin may assign (platform_admin is provisioned out-of-band). */
+export type AssignableRole = Exclude<Role, 'platform_admin'>;
+
+export interface NewUser {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: AssignableRole;
+  employeeId?: string;
+  phone?: string;
+  isContractor?: boolean;
+  password?: string;
+}
+
+export type UpdateUser = Partial<Omit<NewUser, 'password'>> & { isActive?: boolean };
 
 export interface NewTraining {
   title: string;

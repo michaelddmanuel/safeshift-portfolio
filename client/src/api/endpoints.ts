@@ -9,10 +9,12 @@ import type {
   ManagedUser,
   NewIncident,
   NewTraining,
+  NewUser,
   Tenant,
   Training,
   ToolboxTalk,
   ToolboxTalkDetail,
+  UpdateUser,
   User,
 } from '../types';
 
@@ -46,6 +48,11 @@ export const trainingApi = {
 
 export const userApi = {
   list: () => api.get<{ users: ManagedUser[] }>('/users').then((r) => r.data.users),
+  create: (body: NewUser) =>
+    api.post<{ user: ManagedUser }>('/users', body).then((r) => r.data.user),
+  update: (id: string, body: UpdateUser) =>
+    api.patch<{ user: ManagedUser }>(`/users/${id}`, body).then((r) => r.data.user),
+  remove: (id: string) => api.delete(`/users/${id}`).then((r) => r.data),
 };
 
 export const certApi = {

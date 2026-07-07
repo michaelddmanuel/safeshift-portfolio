@@ -26,6 +26,7 @@ export function publicUser(user: User) {
     employeeId: user.employeeId,
     phone: user.phone,
     isContractor: user.isContractor,
+    isActive: user.isActive,
   };
 }
 

@@ -2,6 +2,9 @@
 
 One codebase, three brands — **SafeShift Shell · SafeShift ExxonMobil · SafeShift Chevron** — for US oil & gas Health, Safety & Environment (HSE) training and compliance.
 
+> **Live demo** (self-contained demo mode, no signup):
+> **[Landing site](https://safeshift-site.vercel.app)** · **[Web console](https://safeshift-web.vercel.app)** · **[Worker app](https://safeshift-mobile-web.vercel.app)** — password for all demo logins: `Passw0rd!`
+
 This is the **Phase 0 + Phase 1** build from the blueprint: the multi-tenant foundation (tenant layer, brand theming, the 3-way brand toggle, feature flags, US terminology) plus the flagship **Certification & Expiry Tracker** module.
 
 > ⚠️ Shell, ExxonMobil, Chevron and their safety-program names are trademarks of their owners. This is a white-label **concept/demo**, not an attempt to impersonate.

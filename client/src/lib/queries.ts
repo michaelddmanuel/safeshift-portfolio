@@ -10,7 +10,13 @@ import {
 } from '../api/endpoints';
 import { useTenant } from '../context/TenantContext';
 import { useToast } from '../components/Toast';
-import type { NewIncident } from '../types';
+import type { NewIncident, NewUser, UpdateUser } from '../types';
+
+/** Pull a human-readable message out of an Axios error, else fall back. */
+function apiErrorMessage(err: unknown, fallback: string): string {
+  const data = (err as { response?: { data?: { error?: string } } })?.response?.data;
+  return typeof data?.error === 'string' && data.error ? data.error : fallback;
+}
 
 /** Active tenant slug — part of every query key so switching brand refetches. */
 function useScope(): string {
@@ -46,6 +52,52 @@ export function useToolboxTalks() {
 export function useUsers() {
   const scope = useScope();
   return useQuery({ queryKey: ['users', scope], queryFn: userApi.list });
+}
+
+export function useCreateUser() {
+  const scope = useScope();
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: (body: NewUser) => userApi.create(body),
+    onSuccess: (user) => {
+      toast.success(`${user.fullName} added to the workforce`);
+      void qc.invalidateQueries({ queryKey: ['users', scope] });
+      void qc.invalidateQueries({ queryKey: ['dashboard', scope] });
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not add user.')),
+  });
+}
+
+export function useUpdateUser() {
+  const scope = useScope();
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateUser }) => userApi.update(id, body),
+    onSuccess: (user) => {
+      toast.success(`${user.fullName} updated`);
+      void qc.invalidateQueries({ queryKey: ['users', scope] });
+      void qc.invalidateQueries({ queryKey: ['dashboard', scope] });
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not update user.')),
+  });
+}
+
+export function useSetUserActive() {
+  const scope = useScope();
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      isActive ? userApi.update(id, { isActive: true }) : userApi.remove(id),
+    onSuccess: (_data, { isActive }) => {
+      toast.success(isActive ? 'User reactivated' : 'User deactivated');
+      void qc.invalidateQueries({ queryKey: ['users', scope] });
+      void qc.invalidateQueries({ queryKey: ['dashboard', scope] });
+    },
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not update user status.')),
+  });
 }
 
 export function useIncidents() {

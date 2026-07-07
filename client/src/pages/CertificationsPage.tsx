@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card, StatCard } from '../components/Card';
 import { Button } from '../components/Button';
 import { StatusBadge } from '../components/StatusBadge';
+import { Modal } from '../components/Modal';
 import { Skeleton, StatGridSkeleton } from '../components/Skeleton';
 import { useCertifications, useCertSummary, useRunCertScan } from '../lib/queries';
-import { formatDate } from '../lib/utils';
+import { formatDate, roleLabel } from '../lib/utils';
+import type { Certification } from '../types';
 
 const CAN_SCAN = ['platform_admin', 'hse_manager', 'supervisor'];
 const STATUS_FILTERS = ['all', 'active', 'expiring', 'expired'] as const;
@@ -17,6 +20,7 @@ export function CertificationsPage() {
   const { data: certs = [], isLoading } = useCertifications();
   const { data: summary } = useCertSummary();
   const scan = useRunCertScan();
+  const [selected, setSelected] = useState<Certification | null>(null);
 
   const canScan = user ? CAN_SCAN.includes(user.role) : false;
   const statusFilter = (searchParams.get('status') ?? 'all') as StatusFilter;
@@ -104,11 +108,27 @@ export function CertificationsPage() {
                   <th className="px-5 py-3 font-semibold">Issued</th>
                   <th className="px-5 py-3 font-semibold">Expires</th>
                   <th className="px-5 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3">
+                    <span className="sr-only">View</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredCerts.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50">
+                  <tr
+                    key={c.id}
+                    onClick={() => setSelected(c)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelected(c);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View ${c.name}`}
+                    className="cursor-pointer transition hover:bg-brand-soft/40 focus:bg-brand-soft/50 focus:outline-none"
+                  >
                     <td className="px-5 py-3">
                       <p className="font-medium text-slate-800">{c.name}</p>
                       {c.issuer && <p className="text-xs text-slate-400">{c.issuer}</p>}
@@ -134,6 +154,14 @@ export function CertificationsPage() {
                     <td className="px-5 py-3">
                       <StatusBadge status={c.status} />
                     </td>
+                    <td className="px-5 py-3 text-right">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand">
+                        View
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 6l6 6-6 6" />
+                        </svg>
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -141,6 +169,96 @@ export function CertificationsPage() {
           </div>
         )}
       </Card>
+
+      <CertDetailModal cert={selected} onClose={() => setSelected(null)} />
     </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium text-slate-800">{value}</dd>
+    </div>
+  );
+}
+
+function CertDetailModal({ cert, onClose }: { cert: Certification | null; onClose: () => void }) {
+  return (
+    <Modal
+      isOpen={cert !== null}
+      onOpenChange={(open) => !open && onClose()}
+      title={cert?.name ?? 'Certification'}
+      description={cert?.issuer ? `Issued by ${cert.issuer}` : undefined}
+    >
+      {cert && (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-3">
+            <StatusBadge status={cert.status} />
+            {cert.daysToExpiry !== null && (
+              <span
+                className={
+                  cert.daysToExpiry < 0
+                    ? 'text-sm font-semibold text-red-600'
+                    : cert.daysToExpiry <= 60
+                      ? 'text-sm font-semibold text-amber-600'
+                      : 'text-sm font-semibold text-slate-500'
+                }
+              >
+                {cert.daysToExpiry < 0
+                  ? `${-cert.daysToExpiry} days overdue`
+                  : `${cert.daysToExpiry} days remaining`}
+              </span>
+            )}
+          </div>
+
+          <dl className="grid grid-cols-2 gap-4">
+            <DetailRow
+              label="Holder"
+              value={
+                cert.user ? (
+                  <span>
+                    {cert.user.fullName}
+                    <span className="ml-1 text-xs font-normal text-slate-400">
+                      · {roleLabel(cert.user.role)}
+                    </span>
+                  </span>
+                ) : (
+                  '—'
+                )
+              }
+            />
+            <DetailRow label="Course code" value={cert.courseCode ?? '—'} />
+            <DetailRow label="Issued" value={formatDate(cert.issuedAt)} />
+            <DetailRow label="Expires" value={cert.expiresAt ? formatDate(cert.expiresAt) : 'No expiry'} />
+            <DetailRow label="Issuer" value={cert.issuer ?? '—'} />
+            <DetailRow label="Status" value={<StatusBadge status={cert.status} />} />
+          </dl>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Verification document
+            </p>
+            {cert.fileUrl ? (
+              <a
+                href={cert.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 3v5h5" />
+                </svg>
+                View certificate file
+              </a>
+            ) : (
+              <p className="mt-1 text-sm text-slate-400">No file on record for this certification.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }

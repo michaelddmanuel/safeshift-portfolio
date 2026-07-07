@@ -163,6 +163,7 @@ function makeUser(
     employeeId: `${slug.toUpperCase()}-${local.toUpperCase()}`,
     phone: null,
     isContractor,
+    isActive: true,
   };
 }
 
@@ -430,6 +431,7 @@ function adminUser(email: string): User {
     employeeId: null,
     phone: null,
     isContractor: false,
+    isActive: true,
   };
 }
 
@@ -728,6 +730,60 @@ export function resolveDemoRequest(config: InternalAxiosRequestConfig): Promise<
   // Users (admin)
   if (path === '/users' && method === 'get') {
     return Promise.resolve(ok(config, { users: managedUsers(activeSlugForRequest()) }));
+  }
+  if (path === '/users' && method === 'post') {
+    const body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data ?? {};
+    const slug = activeSlugForRequest();
+    const data = tenantData(slug);
+    const email = String(body.email ?? '').trim().toLowerCase();
+    if (data.users.some((u) => u.email === email)) {
+      return Promise.resolve().then(() => fail(config, 409, 'A user with that email already exists.'));
+    }
+    const first = String(body.firstName ?? '').trim();
+    const last = String(body.lastName ?? '').trim();
+    const emp = String(body.employeeId ?? '').trim();
+    const tel = String(body.phone ?? '').trim();
+    const user: User = {
+      id: `${slug}-u-${Date.now()}`,
+      tenantId: slug,
+      email,
+      firstName: first,
+      lastName: last,
+      fullName: `${first} ${last}`.trim(),
+      role: body.role ?? 'worker',
+      employeeId: emp || null,
+      phone: tel || null,
+      isContractor: Boolean(body.isContractor ?? body.role === 'contractor'),
+      isActive: true,
+    };
+    data.users.push(user);
+    return Promise.resolve(ok(config, { user: { ...user, certs: { active: 0, expiring: 0, expired: 0 } } }));
+  }
+  if (/^\/users\/[^/]+$/.test(path) && method === 'patch') {
+    const id = path.split('/').pop();
+    const body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data ?? {};
+    const data = tenantData(activeSlugForRequest());
+    const user = data.users.find((u) => u.id === id);
+    if (!user) return Promise.resolve().then(() => fail(config, 404, 'User not found'));
+    if (body.email !== undefined) user.email = String(body.email).trim().toLowerCase();
+    if (body.firstName !== undefined) user.firstName = String(body.firstName);
+    if (body.lastName !== undefined) user.lastName = String(body.lastName);
+    user.fullName = `${user.firstName} ${user.lastName}`.trim();
+    if (body.role !== undefined) user.role = body.role;
+    if (body.employeeId !== undefined) user.employeeId = String(body.employeeId).trim() || null;
+    if (body.phone !== undefined) user.phone = String(body.phone).trim() || null;
+    if (body.isContractor !== undefined) user.isContractor = Boolean(body.isContractor);
+    if (body.isActive !== undefined) user.isActive = Boolean(body.isActive);
+    const rollup = { active: 0, expiring: 0, expired: 0 };
+    for (const c of data.certifications.filter((c) => c.userId === user.id)) rollup[c.status] += 1;
+    return Promise.resolve(ok(config, { user: { ...user, certs: rollup } }));
+  }
+  if (/^\/users\/[^/]+$/.test(path) && method === 'delete') {
+    const id = path.split('/').pop();
+    const data = tenantData(activeSlugForRequest());
+    const user = data.users.find((u) => u.id === id);
+    if (user) user.isActive = false;
+    return Promise.resolve(ok(config, { ok: true }));
   }
 
   // Health

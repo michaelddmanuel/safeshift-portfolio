@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SafeShift — Multi-Tenant HSE Training & Compliance</title>
+<meta name="description" content="One codebase, three brands. SafeShift is a white-label HSE training & compliance platform concept: certification tracking, toolbox talks, OSHA 300 incident logging, and live brand theming." />
+<style>
+  :root{
+    --navy:#0b1526; --navy2:#101f38; --ink:#0f172a; --slate:#475569; --mist:#94a3b8;
+    --line:rgba(148,163,184,.18); --card:rgba(255,255,255,.04);
+    --amber:#fbbf24; --emerald:#34d399; --sky:#38bdf8; --rose:#fb7185;
+    --shell:#DD1D21; --shell2:#FBCE07; --exxon:#CE1126; --exxon2:#0054A4; --chevron:#0066B2; --chevron2:#ED1C24;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;background:var(--navy);color:#e2e8f0;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;background:rgba(11,21,38,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.02em}
+  .logo svg{flex:none}
+  .nav-links{display:flex;gap:26px;font-size:14px;color:var(--mist)}
+  .nav-links a:hover{color:#fff}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:700;transition:.18s}
+  .btn-amber{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1c1300;box-shadow:0 8px 24px rgba(251,191,36,.25)}
+  .btn-amber:hover{transform:translateY(-2px)}
+  .btn-ghost{border:1px solid var(--line);color:#e2e8f0}
+  .btn-ghost:hover{border-color:var(--mist);background:var(--card)}
+  @media(max-width:720px){.nav-links{display:none}}
+
+  /* hero */
+  .hero{position:relative;padding:88px 0 64px;overflow:hidden}
+  .hero:before{content:"";position:absolute;inset:-40% -20% auto;height:120%;background:
+    radial-gradient(600px 300px at 20% 20%,rgba(56,189,248,.14),transparent 60%),
+    radial-gradient(700px 340px at 80% 10%,rgba(251,191,36,.12),transparent 60%),
+    radial-gradient(520px 300px at 60% 80%,rgba(52,211,153,.08),transparent 60%);pointer-events:none}
+  .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--mist)}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 10px var(--emerald)}
+  h1{font-size:clamp(34px,5.4vw,58px);line-height:1.08;letter-spacing:-.03em;font-weight:800;margin:22px 0 18px;color:#f8fafc}
+  h1 .grad{background:linear-gradient(92deg,var(--amber),var(--sky) 60%,var(--emerald));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{max-width:640px;font-size:17.5px;color:var(--mist)}
+  .cta-row{display:flex;flex-wrap:wrap;gap:14px;margin:30px 0 8px}
+  .stats{display:flex;flex-wrap:wrap;gap:26px;margin-top:38px}
+  .stat b{display:block;font-size:24px;color:#f8fafc;letter-spacing:-.02em}
+  .stat span{font-size:12.5px;color:var(--mist);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+
+  /* tenant strip */
+  .tenants{padding:22px 0 8px}
+  .tenant-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:760px){.tenant-grid{grid-template-columns:1fr}}
+  .tenant{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:14px}
+  .swatch{width:38px;height:38px;border-radius:10px;flex:none;position:relative;overflow:hidden}
+  .swatch i{position:absolute;inset:0}
+  .swatch i:last-child{clip-path:polygon(100% 0,100% 100%,0 100%)}
+  .tenant b{display:block;font-size:15px;color:#f1f5f9}
+  .tenant span{font-size:12.5px;color:var(--mist)}
+
+  /* sections */
+  section{padding:72px 0}
+  .kicker{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+  h2{font-size:clamp(26px,3.4vw,38px);letter-spacing:-.02em;color:#f8fafc;margin:10px 0 14px}
+  .lead{color:var(--mist);max-width:640px}
+
+  /* features */
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+  @media(max-width:900px){.feat-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.feat-grid{grid-template-columns:1fr}}
+  .feat{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:24px;transition:.2s}
+  .feat:hover{transform:translateY(-3px);border-color:rgba(148,163,184,.4)}
+  .feat .ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .feat h3{font-size:16px;color:#f1f5f9;margin-bottom:6px}
+  .feat p{font-size:14px;color:var(--mist)}
+
+  /* live demo */
+  .demo-band{background:var(--navy2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .demo-layout{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;margin-top:36px}
+  @media(max-width:920px){.demo-layout{grid-template-columns:1fr}}
+  .tabs{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:20px}
+  .tabs button{background:transparent;border:0;color:var(--mist);font:inherit;font-size:13.5px;font-weight:700;padding:9px 18px;cursor:pointer}
+  .tabs button.on{background:rgba(251,191,36,.14);color:var(--amber)}
+  .creds{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:18px}
+  .creds table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .creds th,.creds td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line)}
+  .creds th{color:var(--mist);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;background:rgba(255,255,255,.03)}
+  .creds tr:last-child td{border-bottom:0}
+  .creds code{background:rgba(255,255,255,.07);padding:2px 7px;border-radius:6px;font-size:12.5px}
+  .demo-note{display:flex;gap:10px;margin-top:16px;font-size:13px;color:var(--mist)}
+  .demo-note svg{flex:none;margin-top:2px}
+
+  /* device frames */
+  .stage{display:flex;justify-content:center}
+  .phone{width:320px;height:660px;border-radius:44px;background:#05070f;border:1px solid #26324a;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 10px #0d1524,0 0 0 11px #1d2941;position:relative;padding:12px;display:none}
+  .phone.on{display:block}
+  .phone .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:110px;height:24px;background:#05070f;border-radius:0 0 16px 16px;z-index:2}
+  .phone iframe{width:100%;height:100%;border:0;border-radius:32px;background:#fff}
+  .browser{width:100%;max-width:640px;border-radius:14px;overflow:hidden;border:1px solid #26324a;box-shadow:0 30px 80px rgba(0,0,0,.5);display:none}
+  .browser.on{display:block}
+  .browser .bar{display:flex;align-items:center;gap:8px;background:#0d1524;padding:10px 14px;border-bottom:1px solid #1d2941}
+  .browser .bar i{width:11px;height:11px;border-radius:50%}
+  .browser .url{flex:1;text-align:center;font-size:12px;color:var(--mist);background:#101f38;border-radius:7px;padding:4px 10px;margin:0 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .browser iframe{width:100%;height:520px;border:0;background:#fff;display:block}
+  .frame-actions{display:flex;justify-content:center;gap:14px;margin-top:18px;font-size:13.5px}
+  .frame-actions a,.frame-actions button{color:var(--sky);background:none;border:0;font:inherit;font-weight:700;cursor:pointer}
+  .frame-actions a:hover,.frame-actions button:hover{text-decoration:underline}
+
+  /* tech + footer */
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+  .chip{border:1px solid var(--line);background:var(--card);color:#cbd5e1;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600}
+  footer{border-top:1px solid var(--line);padding:38px 0 46px;font-size:13px;color:var(--mist)}
+  .foot-in{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:flex-start}
+  .foot-links{display:flex;gap:20px}
+  .foot-links a:hover{color:#fff}
+  .disclaimer{max-width:620px;margin-top:14px;font-size:12px;color:#64748b}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a class="logo" href="#top" aria-label="SafeShift home">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5v6c0 5.2 3.4 9 8 10.4C16.6 20 20 16.2 20 11V5l-8-3Z" fill="url(#g1)"/><path d="m8.6 11.9 2.3 2.3 4.5-4.6" stroke="#0b1526" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g1" x1="4" y1="2" x2="20" y2="22"><stop stop-color="#fbbf24"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs></svg>
+      SafeShift
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#demo">Live demo</a>
+      <a href="#tech">Tech</a>
+      <a href="https://github.com/michaelddmanuel/safeshift-portfolio" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <a class="btn btn-amber" href="https://safeshift-web.vercel.app" target="_blank" rel="noopener">Launch demo</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="badge"><span class="dot"></span> Live demo — no install, no signup</span>
+    <h1>One platform. Three brands.<br/><span class="grad">Zero safety blind spots.</span></h1>
+    <p class="sub">SafeShift is a multi-tenant HSE training &amp; compliance platform concept for US oil &amp; gas. One codebase serves Shell, ExxonMobil, and Chevron tenants — each with its own theme, safety vocabulary, and feature set.</p>
+    <div class="cta-row">
+      <a class="btn btn-amber" href="https://safeshift-web.vercel.app" target="_blank" rel="noopener">Open the web console →</a>
+      <a class="btn btn-ghost" href="https://safeshift-mobile-web.vercel.app" target="_blank" rel="noopener">Try the worker app</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>3</b><span>Branded tenants</span></div>
+      <div class="stat"><b>11</b><span>Feature flags</span></div>
+      <div class="stat"><b>OSHA 300</b><span>Incident log built-in</span></div>
+      <div class="stat"><b>60-day</b><span>Cert expiry radar</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="tenants">
+  <div class="wrap tenant-grid">
+    <div class="tenant"><span class="swatch"><i style="background:var(--shell)"></i><i style="background:var(--shell2)"></i></span><div><b>SafeShift Shell</b><span>Life-Saving Rules · Goal Zero</span></div></div>
+    <div class="tenant"><span class="swatch"><i style="background:var(--exxon)"></i><i style="background:var(--exxon2)"></i></span><div><b>SafeShift ExxonMobil</b><span>OIMS · Nobody Gets Hurt</span></div></div>
+    <div class="tenant"><span class="swatch"><i style="background:var(--chevron)"></i><i style="background:var(--chevron2)"></i></span><div><b>SafeShift Chevron</b><span>Operational Excellence · Tenets</span></div></div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <span class="kicker">What's inside</span>
+    <h2>An HSE program in a box</h2>
+    <p class="lead">Every module is tenant-scoped, feature-flagged, and themed per brand — flip the 3-way brand toggle and the whole app reskins live.</p>
+    <div class="feat-grid">
+      <div class="feat"><div class="ico" style="background:rgba(52,211,153,.14)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 5.5v5c0 4.5 3 7.8 7 9 4-1.2 7-4.5 7-9v-5L12 3Z"/><path d="m9 12 2 2 4-4"/></svg></div><h3>Certification &amp; Expiry Tracker</h3><p>OSHA, HAZWOPER, H2S, LOTO and more — with a nightly scan, 30/60/90-day horizons, and pop-up cert details.</p></div>
+      <div class="feat"><div class="ico" style="background:rgba(56,189,248,.14)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h2a2 2 0 0 1 2 2v9l-4-3H9a2 2 0 0 1-2-2v-1"/><path d="M14 3H5a2 2 0 0 0-2 2v9l4-3h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/></svg></div><h3>Toolbox Talks</h3><p>Daily pre-shift briefings with digital sign-in — QR, manual, or virtual — tied to sites and facilitators.</p></div>
+      <div class="feat"><div class="ico" style="background:rgba(251,113,133,.14)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 22 20H2L12 3.5Z"/><path d="M12 10v4"/><path d="M12 17.5h.01"/></svg></div><h3>Incidents &amp; OSHA 300 Log</h3><p>Near-miss to recordable injury: investigation workflow, root cause, CAPA, and an auto-built 29 CFR 1904 log.</p></div>
+      <div class="feat"><div class="ico" style="background:rgba(251,191,36,.14)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"/><path d="M17.5 14.3A5.5 5.5 0 0 1 20.5 20"/></svg></div><h3>Workforce Management</h3><p>Add, edit, deactivate and reactivate workers — with per-person cert readiness and contractor gating.</p></div>
+      <div class="feat"><div class="ico" style="background:rgba(167,139,250,.14)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><h3>Reports &amp; Analytics</h3><p>Audit-readiness KPIs, certification donut, expiry forecast, at-risk workers, incident breakdowns, CSV export.</p></div>
+      <div class="feat"><div class="ico" style="background:rgba(45,212,191,.14)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3.2"/></svg></div><h3>Multi-Tenant Core</h3><p>Request-scoped tenant isolation via AsyncLocalStorage + Sequelize hooks, JWT auth, feature flags, live theming.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="demo-band" id="demo">
+  <div class="wrap">
+    <span class="kicker">Live demo</span>
+    <h2>Use it right now — in your browser</h2>
+    <p class="lead">Both apps below are the real deployments running in self-contained demo mode (seeded data, no backend required). Sign in and click around.</p>
+
+    <div class="demo-layout">
+      <div>
+        <div class="tabs" role="tablist">
+          <button id="tab-phone" class="on" onclick="setTab('phone')">📱 Worker app</button>
+          <button id="tab-web" onclick="setTab('web')">🖥 Admin console</button>
+        </div>
+
+        <p id="blurb-phone" class="lead" style="font-size:14.5px">The Expo-built crew app: sign in, confirm toolbox talks and trainings, and check cert status — brand-themed per tenant.</p>
+        <p id="blurb-web" class="lead" style="font-size:14.5px;display:none">The admin console: dashboards, cert tracking, incident investigations, user management, and the 3-way brand toggle (platform admin).</p>
+
+        <div class="creds">
+          <table>
+            <tr><th>Role</th><th>Email</th><th>Password</th></tr>
+            <tr><td>Platform admin</td><td><code>admin@safeshift.app</code></td><td rowspan="3"><code>Passw0rd!</code></td></tr>
+            <tr><td>HSE manager</td><td><code>hse@shell.safeshift.app</code></td></tr>
+            <tr><td>Worker</td><td><code>worker@shell.safeshift.app</code></td></tr>
+          </table>
+        </div>
+        <div class="demo-note">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
+          <span>Demo mode is fully client-side: data resets on reload and nothing you enter is stored or sent anywhere.</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="stage">
+          <div class="phone on" id="frame-phone">
+            <div class="notch"></div>
+            <iframe id="iframe-phone" src="https://safeshift-mobile-web.vercel.app" title="SafeShift worker app live demo" loading="lazy"></iframe>
+          </div>
+          <div class="browser" id="frame-web">
+            <div class="bar">
+              <i style="background:#fb7185"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i>
+              <span class="url">safeshift-web.vercel.app</span>
+            </div>
+            <iframe id="iframe-web" src="https://safeshift-web.vercel.app" title="SafeShift admin console live demo" loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="frame-actions">
+          <button onclick="reloadFrame()">↻ Reload</button>
+          <a id="fullscreen-link" href="https://safeshift-mobile-web.vercel.app" target="_blank" rel="noopener">Open fullscreen ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tech">
+  <div class="wrap">
+    <span class="kicker">Under the hood</span>
+    <h2>Modern, boring-in-the-right-places stack</h2>
+    <p class="lead">A production-shaped monorepo: typed end to end, tenant-isolated at the ORM layer, and CI-tested.</p>
+    <div class="chips">
+      <span class="chip">React 18 + Vite</span><span class="chip">TypeScript</span><span class="chip">Tailwind CSS v4</span>
+      <span class="chip">React Aria</span><span class="chip">TanStack Query</span><span class="chip">Express</span>
+      <span class="chip">Sequelize + PostgreSQL</span><span class="chip">Supabase (local dev)</span><span class="chip">JWT + Zod</span>
+      <span class="chip">node-cron expiry scans</span><span class="chip">Expo SDK 54 mobile app</span><span class="chip">GitHub Actions CI</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-in">
+      <div class="logo" style="font-size:15px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5v6c0 5.2 3.4 9 8 10.4C16.6 20 20 16.2 20 11V5l-8-3Z" fill="#fbbf24"/><path d="m8.6 11.9 2.3 2.3 4.5-4.6" stroke="#0b1526" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        SafeShift
+      </div>
+      <div class="foot-links">
+        <a href="https://safeshift-web.vercel.app" target="_blank" rel="noopener">Web console</a>
+        <a href="https://safeshift-mobile-web.vercel.app" target="_blank" rel="noopener">Worker app</a>
+        <a href="https://github.com/michaelddmanuel/safeshift-portfolio" target="_blank" rel="noopener">Source on GitHub</a>
+      </div>
+    </div>
+    <p class="disclaimer">SafeShift is a white-label portfolio concept. Shell, ExxonMobil, Chevron and their safety-program names are trademarks of their respective owners; their use here is illustrative only and implies no affiliation or endorsement. © <span id="yr"></span> Michael Manuel.</p>
+  </div>
+</footer>
+
+<script>
+  function setTab(which){
+    const phone = which === 'phone';
+    document.getElementById('frame-phone').classList.toggle('on', phone);
+    document.getElementById('frame-web').classList.toggle('on', !phone);
+    document.getElementById('tab-phone').classList.toggle('on', phone);
+    document.getElementById('tab-web').classList.toggle('on', !phone);
+    document.getElementById('blurb-phone').style.display = phone ? '' : 'none';
+    document.getElementById('blurb-web').style.display = phone ? 'none' : '';
+    document.getElementById('fullscreen-link').href = phone
+      ? 'https://safeshift-mobile-web.vercel.app'
+      : 'https://safeshift-web.vercel.app';
+  }
+  function reloadFrame(){
+    const phoneOn = document.getElementById('frame-phone').classList.contains('on');
+    const f = document.getElementById(phoneOn ? 'iframe-phone' : 'iframe-web');
+    f.src = f.src;
+  }
+  document.getElementById('yr').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
